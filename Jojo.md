@@ -1,0 +1,25 @@
+# K.O.
+
+## MODE EN LIGNE
+
+◀
+
+▼
+
+▶
+
+SAUT
+
+COUP
+
+RAFALE
+
+SPÉCIAL
+
+GARDE
+
+ESQUIVE
+
+ULTIME
+
+STAND
