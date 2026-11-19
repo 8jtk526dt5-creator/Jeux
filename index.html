@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mes jeux</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;min-height:100vh;background:#0d0b14;color:#f2eefc;font-family:-apple-system,system-ui,sans-serif;
+       padding:calc(env(safe-area-inset-top) + 28px) 18px 40px}
+  h1{text-align:center;font-size:2rem;letter-spacing:.08em;margin:0 0 6px}
+  p.sub{text-align:center;color:#9b93b8;margin:0 0 28px}
+  .grid{display:grid;gap:14px;max-width:520px;margin:0 auto}
+  a.game{display:block;padding:22px 20px;border-radius:16px;text-decoration:none;color:inherit;
+         background:linear-gradient(135deg,#2a1f4d,#4a1d3f);border:1px solid #5b4a8a}
+  a.game:active{transform:scale(.98)}
+  .name{font-size:1.3rem;font-weight:700}
+  .desc{margin-top:4px;color:#c9c0e6;font-size:.95rem}
+</style>
+</head>
+<body>
+<h1>MES JEUX</h1>
+<p class="sub">Touche un jeu pour jouer</p>
+<div class="grid" id="grid"></div>
+<script>
+  // Pour ajouter un jeu : ajoute une ligne ici, et envoie le fichier .html dans le dépôt.
+  var jeux = [
+    {nom: "Duel Maudit", desc: "Jeu de combat pixel", fichier: "duel-maudit.html"},
+    {nom: "Jojo", desc: "Duels de Stands", fichier: "jojo.html"}
+  ];
+  var grid = document.getElementById("grid");
+  jeux.forEach(function(j){
+    var a = document.createElement("a");
+    a.className = "game";
+    a.href = j.fichier;
+    a.innerHTML = '<div class="name"></div><div class="desc"></div>';
+    a.querySelector(".name").textContent = j.nom;
+    a.querySelector(".desc").textContent = j.desc;
+    grid.appendChild(a);
+  });
+</script>
+</body>
+</html>
