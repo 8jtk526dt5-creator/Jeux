@@ -322,7 +322,7 @@ function setupWorld(){
   for(let i=0;i<20;i++)spawnPed(true);
   for(let i=0;i<14;i++)spawnTraffic(true);
   // commis des superettes
-  for(const sh of SHOPS)if(sh.type==='24'){const p=mkPed('clerk',sh.x,sh.y);p.a=Math.PI/2;sh.clerk=p}
+  for(const sh of SHOPS)if(sh.type==='24'){const p=mkPed('clerk',sh.x,sh.y-40);p.a=Math.PI/2;p.hide=true;sh.clerk=p}
   // bateaux amarres aux jetees
   for(const[tx,ty,a]of[[68,32.5,0],[72,32.5,0],[76,29.5,0],[70,29.5,0],[69,45.5,0],[74,48.5,0],[66.5,48.5,0]]){
     const b=mkCar('boat',tx*TS,ty*TS,a,'idle');b.vx=b.vy=0}
@@ -777,7 +777,8 @@ const WEAP=[
  {id:'rifle',nom:'FUSIL D\'ASSAUT',court:'ASSAUT',dmg:24,rate:.1,spr:.05,pel:1,price:2500,ammoBuy:90,ammoPrice:250,spd:1100,life:.8},
  {id:'rocket',nom:'LANCE-ROQUETTES',court:'ROQUETTE',dmg:40,rate:1.6,spr:0,pel:1,price:6000,ammoBuy:5,ammoPrice:900,spd:520,life:1.4,rocket:true}
 ];
-let ROB=null,shop=null,shopBtns=[],baseAlert=false;
+let ROB=null,shop=null,shopBtns=[],baseAlert=false,inside=null;
+const OX=-3000,OZ=-3000,RW=300,RD=240;
 function cycleWeapon(){for(let k=1;k<=WEAP.length;k++){const i=(P.wi+k)%WEAP.length;if(P.weapons[i]&&(i===0||P.ammo[i]>0)){P.wi=i;toast(WEAP[i].nom,900);return}}}
 function buyWeapon(i){
   const w=WEAP[i];
@@ -791,24 +792,93 @@ function fireShell(c,own,ang){
   bullets.push({x:c.x+Math.cos(a)*(c.spec.l*.5+18),y:c.y+Math.sin(a)*(c.spec.l*.5+18),vx:Math.cos(a)*(own==='p'?650:540),vy:Math.sin(a)*(own==='p'?650:540),life:1.7,own,dmg:35,expl:true});
   sfxBoom();if(own==='p')shake=Math.max(shake,8);spark(c.x+Math.cos(a)*(c.spec.l*.5+18),c.y+Math.sin(a)*(c.spec.l*.5+18),6);
 }
-function updateShops(dt){
-  for(const sh of SHOPS)if(sh.cd>0)sh.cd-=dt;
-  if(ROB){
-    const sh=ROB.sh,cl=sh.clerk;
-    if(P.car||P.dead||!cl||cl.dead||Math.hypot(sh.x-P.x,sh.y-P.y)>130){if(cl)cl.hands=false;ROB=null;if(!P.dead)toast('Braquage raté',1500)}
-    else{ROB.t+=dt;if(ROB.t>=ROB.need){cl.hands=false;const cash=ri(3,10)*100;P.money+=cash;sfxCash();sh.cd=160;crime(Math.max(P.wanted,2));toast('BRAQUAGE RÉUSSI   +'+money(cash),3000);ROB=null}}
+function robTick(dt){
+  if(!ROB)return;
+  const sh=ROB.sh,cl=ROB.cl;
+  if(P.car||P.dead||!cl||cl.dead||Math.hypot(cl.x-P.x,cl.y-P.y)>150){if(cl)cl.hands=false;ROB=null;if(!P.dead)toast('Braquage raté',1500)}
+  else{ROB.t+=dt;if(ROB.t>=ROB.need){cl.hands=false;const cash=ri(3,10)*100;P.money+=cash;sfxCash();sh.cd=160;crime(Math.max(P.wanted,2));toast('BRAQUAGE RÉUSSI   +'+money(cash),3000);ROB=null}}
+}
+const ROOMC={'24':{fl:[.82,.84,.9],wl:[.9,.92,.96],neon:[.2,1,.5]},gun:{fl:[.3,.25,.21],wl:[.32,.3,.34],neon:[1,.2,.25]},burger:{fl:[.9,.85,.8],wl:[.95,.8,.55],neon:[1,.7,.15]}};
+function intRects(t){
+  const o=[[50,78,250,100]];
+  if(t==='24')o.push([40,150,110,166],[190,150,260,166],[10,20,40,130]);
+  if(t==='gun')o.push([25,150,100,168],[200,150,275,168]);
+  if(t==='burger')o.push([38,140,82,190],[218,140,262,190]);
+  return o;
+}
+function intSolid(x,y){
+  if(x<OX+12||x>OX+RW-12)return true;
+  if(y<OY0()||(y>OZ+RD-8&&!(Math.abs(x-(OX+150))<26&&y<OZ+RD+14)))return true;
+  for(const r of inside.rects)if(x>r[0]+OX-7&&x<r[2]+OX+7&&y>r[1]+OZ-7&&y<r[3]+OZ+7)return true;
+  return false;
+}
+function OY0(){return OZ+12}
+function enterShop(sh){
+  const cl=sh.type==='24'&&sh.clerk&&!sh.clerk.dead?sh.clerk:(sh.type==='24'&&sh.clerk?sh.clerk:{x:0,y:0,a:Math.PI/2,hp:30,kind:'clerk',dead:false,deadT:0,hands:false,hostile:false,walk:0,col:sh.type==='gun'?'#ff5a5a':'#ffb84a',skin:pick(['#f1c9a0','#d9a273','#a8744b']),hair:pick(['#111','#4a2c17','#222'])});
+  inside={sh,ret:{x:P.x,y:P.y},clerk:cl,rects:intRects(sh.type),lock:true,cx:cl.x,cy:cl.y};
+  cl.x=OX+150;cl.y=OZ+55;cl.a=Math.PI/2;
+  P.x=OX+150;P.y=OZ+RD-18;P.a=-Math.PI/2;P.face=P.a;P.vx=P.vy=0;P.swim=false;nearCar=null;
+  cam.x=P.x;cam.y=P.y;cam.head=P.a;rot=-cam.head-Math.PI/2;ROB=null;shop=null;
+  toast(sh.name,1800);
+}
+function exitShop(){
+  const sh=inside.sh;
+  if(sh.type==='24'&&sh.clerk===inside.clerk){inside.clerk.x=inside.cx;inside.clerk.y=inside.cy;inside.clerk.hands=false}
+  ROB=null;shop=null;
+  P.x=sh.x;P.y=sh.y+46;P.a=Math.PI/2;P.face=P.a;P.vx=P.vy=0;
+  cam.x=P.x;cam.y=P.y;cam.head=P.a;rot=-cam.head-Math.PI/2;
+  inside=null;
+}
+function updateInterior(dt){
+  gameT+=dt;shake*=Math.exp(-6*dt);redFlash=Math.max(0,redFlash-dt);
+  const inp=getInput(),IN=inside,sh=IN.sh,cl=IN.clerk;
+  for(const q of SHOPS)if(q.cd>0)q.cd-=dt;
+  if(actEdge){actEdge=false;if(sh.type==='24'&&!cl.dead&&Math.hypot(cl.x-P.x,cl.y-P.y)<110){if(sh.cd>0)toast('Déjà braqué récemment',1500);else if(!ROB){ROB={sh,cl,t:0,need:3.2};cl.hands=true;if(Math.random()<.6)crime(2);toast('BRAQUAGE EN COURS… NE BOUGE PAS !',2000)}}}
+  P.a+=inp.x*2.7*dt;
+  const fwd=-inp.y;let spd=0;
+  if(fwd>.85)spd=110;else if(fwd>.12)spd=70*Math.max(.55,fwd);else if(fwd<-.2)spd=-50;
+  P.vx=Math.cos(P.a)*spd;P.vy=Math.sin(P.a)*spd;P.face=P.a;if(spd)P.anim+=dt*Math.abs(spd)*.09;
+  const nx=P.x+P.vx*dt,ny=P.y+P.vy*dt;
+  if(!intSolid(nx,P.y))P.x=nx;if(!intSolid(P.x,ny))P.y=ny;
+  // tir (hitscan)
+  P.shootT-=dt;
+  if(inp.fire&&P.shootT<=0&&!shop){
+    if(P.wi>0&&P.ammo[P.wi]<=0){P.wi=0;toast('Plus de munitions',1200)}
+    const wp=WEAP[P.wi];P.shootT=wp.rate;if(P.wi>0)P.ammo[P.wi]--;
+    wp.rocket?sfxBoom():sfxShot();spark(P.x+Math.cos(P.a)*14,P.y+Math.sin(P.a)*14,2);
+    if(!cl.dead){
+      const d=Math.hypot(cl.x-P.x,cl.y-P.y),ad=Math.abs(angDiff(P.a,Math.atan2(cl.y-P.y,cl.x-P.x)));
+      if(d<320&&ad<.4){
+        P.a=Math.atan2(cl.y-P.y,cl.x-P.x);cl.hp-=wp.dmg*wp.pel*(wp.rocket?3:1);shake=Math.max(shake,3);
+        if(cl.hp<=0){cl.dead=true;cl.hands=false;ROB=null;const c=ri(2,6)*100;if(sh.type==='24')P.money+=c;P.kills++;crime(Math.max(P.wanted,3));toast('Commis abattu'+(sh.type==='24'?'   +'+money(c):''),2500)}
+        else if(sh.type==='24'&&P.wanted<2)crime(2);
+      }
+    }
   }
-  const sh=nearShop(42);
-  if(!sh){for(const q of SHOPS)q.lock=false}
-  else if(!sh.lock&&!P.car&&!P.dead){
-    if(sh.type==='gun'){shop={};sh.lock=true}
+  robTick(dt);
+  // comptoir
+  const dc=Math.hypot(P.x-(OX+150),P.y-(OZ+118));
+  if(dc>80)IN.lock=false;
+  else if(!IN.lock&&!cl.dead&&dc<62){
+    IN.lock=true;
+    if(sh.type==='gun')shop={};
     else if(sh.type==='burger'){
-      sh.lock=true;
-      if(P.hp>=100)toast('Tu n\'as pas faim',1200);
-      else if(P.money<25)toast('Pas assez d\'argent',1300);
+      if(P.hp>=100)toast('Tu n\'as pas faim',1200);else if(P.money<25)toast('Pas assez d\'argent',1300);
       else{P.money-=25;P.hp=Math.min(100,P.hp+40);toast('BURGER   +40 santé   −$25',1800);sfxCash()}
     }
   }
+  for(const t of toasts)t.life-=dt;toasts=toasts.filter(t=>t.life>0);
+  if(P.y>OZ+RD-3&&Math.abs(P.x-(OX+150))<26){exitShop();return}
+  cam.head+=angDiff(cam.head,P.a)*Math.min(1,dt*5);
+  cam.x=lerp(cam.x,P.x,Math.min(1,dt*9));cam.y=lerp(cam.y,P.y,Math.min(1,dt*9));
+  rot=-cam.head-Math.PI/2;
+}
+function updateShops(dt){
+  for(const sh of SHOPS)if(sh.cd>0)sh.cd-=dt;
+  robTick(dt);
+  const sh=nearShop(42);
+  if(!sh){for(const q of SHOPS)q.lock=false}
+  else if(!sh.lock&&!P.car&&!P.dead){sh.lock=true;enterShop(sh)}
   const inB=inBaseP(P.x,P.y);
   if(inB&&!P.dead&&!baseAlert){baseAlert=true;crime(Math.max(P.wanted,4));toast('ZONE MILITAIRE — ILS TIRENT À VUE !',2800);for(const p of peds)if(p.kind==='soldier')p.hostile=true}
   if(baseAlert&&!inB&&P.wanted===0){baseAlert=false;for(const p of peds)if(p.kind==='soldier')p.hostile=false}
@@ -820,11 +890,7 @@ function updatePlayer(dt){
     actEdge=false;
     if(P.car)exitCar();
     else{
-      const sh=nearShop(78);
-      const dc=nearCar?Math.hypot(nearCar.x-P.x,nearCar.y-P.y):1e9;
-      if(sh&&sh.type==='24'&&sh.clerk&&!sh.clerk.dead&&Math.hypot(sh.x-P.x,sh.y-P.y)<dc){
-        if(sh.cd>0)toast('Déjà braqué récemment',1500);else if(!ROB)startRob(sh);
-      }else tryEnter();
+      tryEnter();
     }
   }
   if(P.car){
@@ -875,7 +941,7 @@ function updatePlayer(dt){
   // voiture / giver proches (pour l'UI)
   nearCar=null;if(!P.car){let bd=75;for(const c of cars){if(c.dead||c.mode==='player')continue;const d=Math.hypot(c.x-P.x,c.y-P.y);if(d<bd){bd=d;nearCar=c}}}
 }
-function startRob(sh){ROB={sh,t:0,need:3.2};sh.clerk.hands=true;if(Math.random()<.6)crime(2);toast('BRAQUAGE EN COURS… NE BOUGE PAS !',2000)}
+function startRob(sh){ROB={sh,cl:sh.clerk,t:0,need:3.2};sh.clerk.hands=true;if(Math.random()<.6)crime(2);toast('BRAQUAGE EN COURS… NE BOUGE PAS !',2000)}
 function updatePed(p,dt){
   if(p.dead){p.deadT+=dt;return}
   const dp=Math.hypot(P.x-p.x,P.y-p.y);
@@ -953,7 +1019,7 @@ function manage(dt){
     return true;
   });
   peds=peds.filter(p=>{const d=Math.hypot(p.x-P.x,p.y-P.y);if(p.dead)return p.deadT<8||d<300;if(p.kind==='gang'||p.kind==='soldier'||p.kind==='clerk')return true;if(p.kind==='cop'&&P.wanted>0)return d<1500;return d<1500});
-  for(const sh of SHOPS){if(sh.type!=='24')continue;if((!sh.clerk||(sh.clerk.dead&&sh.clerk.deadT>7)||!peds.includes(sh.clerk))&&Math.hypot(sh.x-P.x,sh.y-P.y)>900){const p=mkPed('clerk',sh.x,sh.y);p.a=Math.PI/2;sh.clerk=p}}
+  for(const sh of SHOPS){if(sh.type!=='24')continue;if((!sh.clerk||(sh.clerk.dead&&sh.clerk.deadT>7)||!peds.includes(sh.clerk))&&Math.hypot(sh.x-P.x,sh.y-P.y)>900){const p=mkPed('clerk',sh.x,sh.y-40);p.a=Math.PI/2;p.hide=true;sh.clerk=p}}
 }
 function copManager(dt){
   let cnt=0,near=false;
@@ -1406,10 +1472,53 @@ function pedMesh0(p,isP){
   }
   flatRot(T,x,z,5,5,a,.7,[0,0,0]);
 }
+function interiorMesh(ex,ez){
+  const sh=inside.sh,t=sh.type,C=ROOMC[t],ox=OX,oz=OZ,H=70;
+  // sol
+  if(t==='burger'){for(let i=0;i<10;i++)for(let j=0;j<8;j++)flat(D,ox+i*30,oz+j*30,30,30,0,((i+j)&1)?[.92,.2,.2]:[.95,.95,.95])}
+  else if(t==='gun'){for(let j=0;j<8;j++)flat(D,ox,oz+j*30,RW,30,0,(j&1)?C.fl:C.fl.map(v=>v*.88))}
+  else{for(let i=0;i<10;i++)for(let j=0;j<8;j++)flat(D,ox+i*30,oz+j*30,30,30,0,((i+j)&1)?C.fl:C.fl.map(v=>v*.9))}
+  flat(D,ox+125,oz+RD-5,50,10,.3,[.2,1,.5],.9);
+  // murs (version basse si la camera est derriere)
+  const wl=C.wl,hN=ez<oz?8:H,hS=ez>oz+RD?8:H,hW=ex<ox?8:H,hE=ex>ox+RW?8:H;
+  box(D,ox+RW/2,hN/2,oz,RW/2+4,hN/2,4,0,wl,0);
+  box(D,ox,hW/2,oz+RD/2,4,hW/2,RD/2,0,wl,0);box(D,ox+RW,hE/2,oz+RD/2,4,hE/2,RD/2,0,wl,0);
+  box(D,ox+62,hS/2,oz+RD,66,hS/2,4,0,wl,0);box(D,ox+RW-62,hS/2,oz+RD,66,hS/2,4,0,wl,0);
+  if(hS>10)box(D,ox+150,H-6,oz+RD,26,6,4,0,wl,0);
+  box(D,ox+RW/2,hN-3,oz+4.5,RW/2,1.2,.8,0,C.neon,1);
+  glowAt(ox+150,40,oz+RD-6,44,[.2,1,.5].map(v=>v*.5));
+  // comptoir
+  box(D,ox+150,10,oz+89,100,10,11,0,t==='gun'?[.22,.2,.22]:t==='burger'?[.8,.2,.15]:[.7,.72,.8],0);
+  box(D,ox+150,20.4,oz+89,102,.6,12,0,[.92,.9,.88],0);
+  box(D,ox+185,25,oz+86,6,4,5,0,[.15,.15,.18],0);box(D,ox+185,27,oz+83.6,4.4,2.4,.3,0,[.4,1,.6],.9);
+  if(t==='24'){
+    let k=0;
+    for(const[x0,z0]of[[75,158],[225,158]]){
+      box(D,ox+x0,14,oz+z0,35,14,8,0,[.78,.8,.88],0);box(D,ox+x0,29,oz+z0,35,.5,8.4,0,[.9,.9,.95],0);
+      for(let i=0;i<9;i++){k++;box(D,ox+x0-30+i*7.5,18+((k*7)%3)*3,oz+z0+((i&1)?-3:3),2.6,3.4+(k%3),2.4,0,[[1,.3,.3],[1,.8,.2],[.3,.7,1],[.4,1,.5],[1,.4,.9]][k%5],.15)}
+    }
+    box(D,ox+16,22,oz+75,6,22,55,0,[.9,.95,1],.15);box(D,ox+20,22,oz+75,.6,18,50,0,[.5,.9,1],.8);
+    box(D,ox+150,50,oz+5,60,10,.8,0,[1,1,1],.9);
+  }else if(t==='gun'){
+    for(let k=0;k<7;k++)for(let r=0;r<2;r++){const gx=ox+36+k*38,gy=34+r*20;
+      box(D,gx,gy,oz+6,14,1.4,1.2,0,[.08,.08,.1],0);box(D,gx-14,gy-1.6,oz+6,5,2.4,1.4,0,[.35,.2,.1],0);box(D,gx+5,gy-3,oz+6,1.2,2.4,1,0,[.08,.08,.1],0)}
+    for(const x0 of[62,238]){box(D,ox+x0,10,oz+158,37,10,9,0,GLASS,.1);box(D,ox+x0,3,oz+158,37,3,9,0,[.15,.14,.15],0);
+      for(let i=0;i<5;i++)box(D,ox+x0-26+i*13,12,oz+158,5,1.5,1.4,0,[.08,.08,.1],0)}
+    box(D,ox+150,56,oz+4,34,9,.8,0,[1,.2,.25],.9);
+  }else{
+    box(D,ox+150,52,oz+5,70,14,.8,0,[1,.78,.15],.8);box(D,ox+120,52,oz+4,14,8,.9,0,[.9,.15,.1],.8);box(D,ox+180,52,oz+4,14,8,.9,0,[.2,.7,.3],.8);
+    box(D,ox+150,22,oz+60,30,2,10,0,[.3,.3,.32],0);box(D,ox+150,19,oz+70,32,10,2,0,[.55,.55,.6],0);
+    for(const x0 of[60,240]){box(D,x0+ox,10,oz+165,22,1.6,22,0,[.9,.9,.92],0);box(D,x0+ox,5,oz+165,2,5,2,0,[.5,.5,.55],0);
+      for(const[dx,dz]of[[-30,0],[30,0],[0,-30],[0,30]])box(D,x0+ox+dx,6,oz+165+dz,5,6,5,0,[.9,.15,.15],0)}
+  }
+  // lueur interieure
+  glowAt(ox+150,66,oz+120,260,[1,.95,.85].map(v=>v*.18));
+}
 function buildDyn(ex,ez,night){
   D.n=0;T.n=0;Gb.n=0;
+  if(inside){interiorMesh(ex,ez);pedMesh(P,true);pedMesh(inside.clerk,false);return}
   for(const c of cars){const dx=c.x-ex,dz=c.y-ez;if(dx*dx+dz*dz>4e6)continue;carMesh(c,night)}
-  for(const p of peds){const dx=p.x-ex,dz=p.y-ez;if(dx*dx+dz*dz>1.7e6)continue;pedMesh(p,false)}
+  for(const p of peds){if(p.hide)continue;const dx=p.x-ex,dz=p.y-ez;if(dx*dx+dz*dz>1.7e6)continue;pedMesh(p,false)}
   if(!P.car)pedMesh(P,true);
   // balles
   for(const b of bullets){const a=Math.atan2(b.vy,b.vx);if(b.expl){box(D,b.x,13,b.y,9,2,2,a,[1,.6,.2],1);glowAt(b.x,13,b.y,36,[1,.6,.2])}else{box(D,b.x,13,b.y,6,.7,.7,a,[1,.9,.4],1);glowAt(b.x,13,b.y,16,[1,.8,.3])}}
@@ -1490,31 +1599,32 @@ function render3D(){
   const eye=[ex,hgt*(dd/cam.dist*.4+.6),ez],look=[cam.x+fx*70,(P.car?16:20)+al*.85,cam.y+fz*70];
   const asp=W/H,vf=(asp<1?80:68+Math.min(1,sp/450)*10)*Math.PI/180;
   const V=lookAt(eye,look),Pm=persp(vf,asp,3,7000);VPm=mul(Pm,V.m);camR=[V.s[0],V.s[2]];
-  const tn=tint(hour),night=clamp((tn[3]-.1)/.38,0,1);lastNight=night;
-  const E=env(hour);
+  const HH=inside?12.5:hour;
+  const tn=tint(HH),night=clamp((tn[3]-.1)/.38,0,1);lastNight=night;
+  const E=env(HH),FC=inside?[.07,.06,.1]:E.hor;
   // soleil / lune
-  const e0=(hour>=6.5&&hour<=19.5)?Math.sin(Math.PI*(hour-6.5)/13)*.9:-.12,cc=Math.sqrt(1-e0*e0);
+  const e0=(HH>=6.5&&HH<=19.5)?Math.sin(Math.PI*(HH-6.5)/13)*.9:-.12,cc=Math.sqrt(1-e0*e0);
   const sunD=[-.92*cc,e0,-.38*cc];
   const moon=[.3,.75,-.45],ml=Math.hypot(...moon),mix=clamp(e0*6,0,1);
   let ld=[lerp(moon[0]/ml,sunD[0],mix),lerp(moon[1]/ml,Math.max(.05,sunD[1]),mix),lerp(moon[2]/ml,sunD[2],mix)];const ll=Math.hypot(...ld);ld=ld.map(v=>v/ll);
   gl.viewport(0,0,glc.width,glc.height);
-  gl.disable(gl.BLEND);gl.depthMask(true);gl.clearColor(E.hor[0],E.hor[1],E.hor[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.disable(gl.BLEND);gl.depthMask(true);gl.clearColor(FC[0],FC[1],FC[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   // ciel
-  gl.useProgram(progS);gl.disable(gl.DEPTH_TEST);
+  if(!inside){gl.useProgram(progS);gl.disable(gl.DEPTH_TEST);
   gl.uniform3fv(US.uF,V.f);gl.uniform3fv(US.uR,V.s);gl.uniform3fv(US.uU,V.u);gl.uniform3fv(US.uZen,E.zen);gl.uniform3fv(US.uHor,E.hor);gl.uniform3fv(US.uSunD,sunD);gl.uniform3fv(US.uSunC,E.sunc);
   gl.uniform1f(US.uTH,Math.tan(vf/2));gl.uniform1f(US.uAsp,asp);gl.uniform1f(US.uNight,night);
   gl.bindBuffer(gl.ARRAY_BUFFER,skyBuf);gl.disableVertexAttribArray(1);gl.disableVertexAttribArray(2);gl.disableVertexAttribArray(3);gl.disableVertexAttribArray(4);
   gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);gl.drawArrays(gl.TRIANGLES,0,3);
-  for(let i=1;i<5;i++)gl.enableVertexAttribArray(i);
+  for(let i=1;i<5;i++)gl.enableVertexAttribArray(i);}
   // monde
   gl.useProgram(progM);gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
-  gl.uniformMatrix4fv(U.uVP,false,VPm);gl.uniform3fv(U.uSun,ld);gl.uniform3fv(U.uSunCol,E.sunc.map(v=>v*1.15));gl.uniform3fv(U.uAmb,E.amb);gl.uniform3fv(U.uFog,E.hor);
+  gl.uniformMatrix4fv(U.uVP,false,VPm);gl.uniform3fv(U.uSun,ld);gl.uniform3fv(U.uSunCol,E.sunc.map(v=>v*1.15));gl.uniform3fv(U.uAmb,E.amb);gl.uniform3fv(U.uFog,FC);
   gl.uniform3f(U.uCam,eye[0],eye[1],eye[2]);gl.uniform1f(U.uFogN,420);gl.uniform1f(U.uFogF,night>.5?2000:2600);gl.uniform1f(U.uNight,night);gl.uniform1f(U.uTime,gameT);
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,winTex);gl.uniform1i(U.uTex,0);
   const c=P.car;
   if(c&&night>.08){gl.uniform1f(U.uHL,1);gl.uniform3f(U.uHLPos,c.x+Math.cos(c.a)*c.spec.l/2,12,c.y+Math.sin(c.a)*c.spec.l/2);const hl=Math.hypot(1,.14);gl.uniform3f(U.uHLDir,Math.cos(c.a)/hl,-.14/hl,Math.sin(c.a)/hl)}else gl.uniform1f(U.uHL,0);
   buildDyn(eye[0],eye[2],night);
-  gl.bindBuffer(gl.ARRAY_BUFFER,SBuf);attr();gl.uniform1i(U.uMode,0);gl.uniform1f(U.uAlpha,1);gl.drawArrays(gl.TRIANGLES,0,SBn);
+  if(!inside){gl.bindBuffer(gl.ARRAY_BUFFER,SBuf);attr();gl.uniform1i(U.uMode,0);gl.uniform1f(U.uAlpha,1);gl.drawArrays(gl.TRIANGLES,0,SBn)}
   upl(D,dBuf,0,1);
   gl.enable(gl.BLEND);gl.depthMask(false);
   gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);upl(T,tBuf,1,.3);
@@ -1528,9 +1638,10 @@ function w2s(x,y,z){
   return[(cx*.5+.5)*W,(1-(cy*.5+.5))*H,w];
 }
 function drawLabels(){
+  if(inside)return;
   const lab=(x,y,t,col,d)=>{const s=w2s(x,y,d);if(!s)return;const m=Math.round(Math.hypot(P.x-x,P.y-d)/11.5);txt(t,s[0],s[1],17,col,'center',5);txt(m+' m',s[0],s[1]+17,12,'#fff','center',4)};
   for(const sh of SHOPS){const d=Math.hypot(P.x-sh.x,P.y-sh.y);if(d>650)continue;const sc2=w2s(sh.x,75,sh.y);if(!sc2)continue;
-    const t=sh.type==='24'?(sh.cd>0?'24/7 · fermé':'24/7 · BRAQUER'):sh.type==='gun'?'ARMES':'BURGER';
+    const t=sh.type==='24'?(sh.cd>0?'24/7 · fermé':'24/7'):sh.type==='gun'?'ARMES':'BURGER';
     txt(t,sc2[0],sc2[1],14,sh.type==='24'?'#5aff9a':sh.type==='gun'?'#ff6a6a':'#ffb84a','center',5)}
   {const d=Math.hypot(P.x-15*TS,P.y-55*TS);if(d<1200&&d>260){const sc2=w2s(15*TS,150,BY0*TS);if(sc2)txt('BASE MILITAIRE',sc2[0],sc2[1],16,'#ff5a5a','center',5)}}
   if(!M){for(const v of GIV)if(v.cd<=0)lab(v.x,250,'M','#ffd23f',v.y)}
@@ -1544,6 +1655,7 @@ function txt(s,x,y,size,col,align,stroke){
   g.fillStyle=col;g.fillText(s,x,y);
 }
 function drawMinimap(){
+  if(inside){const mR=Math.min(64*sc,W*.17),x=mR+14,y=mR+14;g.fillStyle='rgba(20,16,42,.9)';g.beginPath();g.arc(x,y,mR,0,TAU);g.fill();g.strokeStyle='#ff3fa4';g.lineWidth=2;g.stroke();txt('INTÉRIEUR',x,y-6,12,'#fff','center',3);txt('sortie ▼',x,y+10,11,'#9ae8ff','center',3);return mR}
   const mR=Math.min(64*sc,W*.17),x=mR+14,y=mR+14,s=.15;
   g.save();g.beginPath();g.arc(x,y,mR,0,TAU);g.clip();
   g.fillStyle='#14102a';g.fillRect(x-mR,y-mR,2*mR,2*mR);
@@ -1576,7 +1688,8 @@ function btn(b,label,col,on,dim){
   g.strokeStyle=col;g.lineWidth=3;g.stroke();
   txt(label,b.x,b.y,Math.max(11,b.r*.34),'#fff','center',3);g.globalAlpha=1;
 }
-function robTarget(){const sh=nearShop(78);if(!sh||sh.type!=='24'||!sh.clerk||sh.clerk.dead)return null;const dc=nearCar?Math.hypot(nearCar.x-P.x,nearCar.y-P.y):1e9;return Math.hypot(sh.x-P.x,sh.y-P.y)<dc?sh:null}
+function robTarget(){if(inside){const cl=inside.clerk;return inside.sh.type==='24'&&cl&&!cl.dead&&Math.hypot(cl.x-P.x,cl.y-P.y)<110?inside.sh:null}
+  const sh=nearShop(78);if(1)return null;if(!sh||sh.type!=='24'||!sh.clerk||sh.clerk.dead)return null;const dc=nearCar?Math.hypot(nearCar.x-P.x,nearCar.y-P.y):1e9;return Math.hypot(sh.x-P.x,sh.y-P.y)<dc?sh:null}
 function drawShop(){
   shopBtns=[];
   g.fillStyle='rgba(10,0,25,.86)';g.fillRect(0,0,W,H);
@@ -1699,7 +1812,7 @@ function drawTitle(){
   g.lineWidth=7;g.strokeStyle='#1a0b3d';g.strokeText('NEON COAST',W/2,H*.2);g.fillStyle=tg;g.fillText('NEON COAST',W/2,H*.2);
   txt('MONDE OUVERT · TOUT EST PERMIS',W/2,H*.2+fs*.72,Math.min(W/24,15),'#ffe9f6','center',4);
   g.globalAlpha=.55+.45*Math.sin(t*3);txt('TOUCHE POUR JOUER',W/2,H*.9,Math.min(W/14,22),'#fff','center',5);g.globalAlpha=1;
-  txt('Voitures · Bateaux · Braquages · Base militaire',W/2,H*.9+34,Math.min(W/30,12),'#d9c2ff','center',3);
+  txt('Boutiques à visiter · Bateaux · Braquages · Base militaire',W/2,H*.9+34,Math.min(W/30,12),'#d9c2ff','center',3);
 }
 function draw(){
   g.setTransform(DPR,0,0,DPR,0,0);
@@ -1714,14 +1827,14 @@ let last=0;
 function frame(t){
   requestAnimationFrame(frame);
   const dt=Math.min(.033,(t-last)/1000||.016);last=t;
-  if(state==='play'&&!shop)update(dt);
+  if(state==='play'&&!shop){if(inside)updateInterior(dt);else update(dt)}
   else if(shop){for(const t of toasts)t.life-=dt;toasts=toasts.filter(t=>t.life>0)}
   draw();
 }
 setupWorld();
 glInit();window.__glReady=true;resize();
 requestAnimationFrame(frame);
-window.__dbg={P,cars,peds,SHOPS,M:()=>M,hour:h=>{hour=h},err:()=>window.__glerr,tp:(x,y,a)=>{P.x=x;P.y=y;if(a!==undefined){P.a=a;cam.head=a}},st:()=>({wanted:P.wanted,hp:P.hp,money:P.money,car:P.car&&P.car.type,swim:P.swim,armor:P.armor,rob:!!ROB,shop:!!shop,base:baseAlert,n:cars.length,peds:peds.length}),buy:i=>{P.money=9999;buyWeapon(i)},shopopen:()=>{shop={}}};
+window.__dbg={P,cars,peds,SHOPS,M:()=>M,hour:h=>{hour=h},err:()=>window.__glerr,tp:(x,y,a)=>{P.x=x;P.y=y;if(a!==undefined){P.a=a;cam.head=a}},st:()=>({wanted:P.wanted,hp:P.hp,money:P.money,car:P.car&&P.car.type,swim:P.swim,armor:P.armor,rob:!!ROB,shop:!!shop,inside:!!inside,base:baseAlert,n:cars.length,peds:peds.length}),buy:i=>{P.money=9999;buyWeapon(i)},shopopen:()=>{shop={}},enter:i=>{const sh=SHOPS[i];sh.lock=true;enterShop(sh)},ROBx:()=>ROB&&ROB.t,IN:()=>inside};
 </script>
 </body>
 </html>
