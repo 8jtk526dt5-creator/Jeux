@@ -1660,11 +1660,31 @@ const bldgAt=(x,y)=>{const tx=Math.floor(x/TS),ty=Math.floor(y/TS);return tx>=0&
 let skyBuf=null;
 const PP={ok:false,fbo:null,tex:null,rb:null,b1:null,b2:null,t1:null,t2:null,bw:0,bh:0,prog:null};
 const PVS=`attribute vec2 aP;varying vec2 vU;void main(){vU=aP*.5+.5;gl_Position=vec4(aP,0.,1.);}`;
-const PFS=`precision mediump float;varying vec2 vU;uniform sampler2D uT,uT2;uniform int uM;uniform vec2 uD;uniform float uK,uTh;
+const PFS=`precision mediump float;varying vec2 vU;uniform sampler2D uT,uT2;uniform int uM;uniform vec2 uD;uniform float uK,uTh;uniform vec2 uPx;
+float lm(vec3 c){return dot(c,vec3(.299,.587,.114));}
 void main(){
  if(uM==0){vec3 c=texture2D(uT,vU).rgb;float l=max(c.r,max(c.g,c.b));gl_FragColor=vec4(c*smoothstep(uTh,1.,l)*1.25,1.);}
  else if(uM==1){vec3 s=texture2D(uT,vU).rgb*.227;s+=(texture2D(uT,vU+uD*1.38).rgb+texture2D(uT,vU-uD*1.38).rgb)*.316;s+=(texture2D(uT,vU+uD*3.23).rgb+texture2D(uT,vU-uD*3.23).rgb)*.07;gl_FragColor=vec4(s,1.);}
- else{vec3 c=texture2D(uT,vU).rgb+texture2D(uT2,vU).rgb*uK;vec2 q=vU-.5;c*=1.-dot(q,q)*.55;gl_FragColor=vec4(c,1.);}
+ else{
+  vec3 cC=texture2D(uT,vU).rgb,cN=texture2D(uT,vU+vec2(0.,uPx.y)).rgb,cS=texture2D(uT,vU-vec2(0.,uPx.y)).rgb,cE=texture2D(uT,vU+vec2(uPx.x,0.)).rgb,cW=texture2D(uT,vU-vec2(uPx.x,0.)).rgb;
+  float lC=lm(cC),lN=lm(cN),lS=lm(cS),lE=lm(cE),lW=lm(cW);
+  float mx=max(lC,max(max(lN,lS),max(lE,lW))),mn=min(lC,min(min(lN,lS),min(lE,lW)));
+  vec3 c=cC;
+  if(mx-mn>max(.1,mx*.2)){
+   vec2 dir=vec2(-((lN+lS)-(lE+lW)*0.),((lW+lE)-(lN+lS)));
+   dir=vec2((lW+lE)-(lN+lS),(lN+lS)-(lW+lE));
+   float dr=max((lN+lS+lE+lW)*.03125,.0078),rc=1./(min(abs(dir.x),abs(dir.y))+dr);
+   dir=clamp(dir*rc,-2.,2.)*uPx;
+   vec3 a=.5*(texture2D(uT,vU+dir*(1./3.-.5)).rgb+texture2D(uT,vU+dir*(2./3.-.5)).rgb);
+   vec3 b=a*.5+.25*(texture2D(uT,vU+dir*-.5).rgb+texture2D(uT,vU+dir*.5).rgb);
+   float lb=lm(b);c=(lb<mn||lb>mx)?a:b;
+  }
+  c+=texture2D(uT2,vU).rgb*uK;
+  float l=lm(c);c=mix(vec3(l),c,1.12);
+  c=c/(1.+max(c-.78,0.)*.55);
+  c=pow(c,vec3(.97));
+  vec2 q=vU-.5;c*=1.-dot(q,q)*.5;gl_FragColor=vec4(c,1.);
+ }
 }`;
 function ppTex(w,h){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t}
 function ppFbo(tex,w,h,depth){const f=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,f);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
@@ -1699,6 +1719,7 @@ function postFX(night){
   pass(q.b1,q.bw,q.bh,0,q.tex,null,0,0);
   pass(q.b2,q.bw,q.bh,1,q.t1,null,1/q.bw,0);pass(q.b1,q.bw,q.bh,1,q.t2,null,0,1/q.bh);
   pass(q.b2,q.bw,q.bh,1,q.t1,null,2/q.bw,0);pass(q.b1,q.bw,q.bh,1,q.t2,null,0,2/q.bh);
+  gl.uniform2f(q.uPx,1/glc.width,1/glc.height);
   pass(null,glc.width,glc.height,2,q.tex,q.t1,0,0);
   for(let i=1;i<5;i++)gl.enableVertexAttribArray(i);gl.enable(gl.DEPTH_TEST);
 }
@@ -1713,12 +1734,13 @@ function glInit(){
     winTex=makeWinTex();
     D=B(60000);T=B(60000);Gb=B(30000);dBuf=gl.createBuffer();tBuf=gl.createBuffer();gBuf=gl.createBuffer();
     skyBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,skyBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
-    try{PP.prog=mkProg(PVS,PFS);gl.useProgram(PP.prog);for(const n of['uM','uT','uT2','uD','uK','uTh'])PP[n]=gl.getUniformLocation(PP.prog,n)}catch(e){PP.prog=null}
+    try{PP.prog=mkProg(PVS,PFS);gl.useProgram(PP.prog);for(const n of['uM','uT','uT2','uD','uK','uTh','uPx'])PP[n]=gl.getUniformLocation(PP.prog,n)}catch(e){PP.prog=null}
     buildStatic();GLOK=true;
   }catch(e){GLOK=false;window.__glerr=String(e)}
 }
+let GS=Math.min(window.devicePixelRatio||1,2),GSMAX=GS,fpsAcc=0,fpsN=0;
 function glResize(){
-  if(!GLOK)return;const gs=Math.min(window.devicePixelRatio||1,1.6);
+  if(!GLOK)return;const gs=GS;
   glc.width=Math.floor(W*gs);glc.height=Math.floor(H*gs);gl.viewport(0,0,glc.width,glc.height);
   ppResize();
 }
@@ -1977,7 +1999,11 @@ function draw(){
 let last=0;
 function frame(t){
   requestAnimationFrame(frame);
-  const dt=Math.min(.033,(t-last)/1000||.016);last=t;
+  const rawdt=(t-last)/1000||.016;
+  const dt=Math.min(.033,rawdt);last=t;
+  if(state==='play'&&rawdt<.25){fpsAcc+=rawdt;fpsN++;if(fpsN>=70){const av=fpsAcc/fpsN;fpsAcc=0;fpsN=0;
+    if(av>.028&&GS>.85){GS=Math.max(.85,GS-.2);glResize()}
+    else if(av<.0185&&GS<GSMAX){GS=Math.min(GSMAX,GS+.1);glResize()}}}
   if(state==='play'&&!shop){if(inside)updateInterior(dt);else update(dt)}
   else if(shop){for(const t of toasts)t.life-=dt;toasts=toasts.filter(t=>t.life>0)}
   draw();
@@ -1985,7 +2011,7 @@ function frame(t){
 setupWorld();
 glInit();window.__glReady=true;resize();
 requestAnimationFrame(frame);
-window.__dbg={P,cars,peds,SHOPS,M:()=>M,hour:h=>{hour=h},err:()=>window.__glerr,tp:(x,y,a)=>{P.x=x;P.y=y;if(a!==undefined){P.a=a;cam.head=a}},st:()=>({wanted:P.wanted,hp:P.hp,money:P.money,car:P.car&&P.car.type,swim:P.swim,armor:P.armor,rob:!!ROB,shop:!!shop,inside:!!inside,base:baseAlert,n:cars.length,peds:peds.length}),buy:i=>{P.money=9999;buyWeapon(i)},shopopen:()=>{shop={}},pp:()=>PP.ok,rain:v=>{RAIN=rainTgt=v;rainClock=999},flash:()=>{flashT=.4},cm:()=>{copManager(.016);return cars.filter(c=>c.mode==="air").length},la:()=>copManager.lastAir,air:()=>JSON.stringify(cars.filter(c=>c.mode==="air").map(c=>[Math.round(c.x),Math.round(c.y),Math.round(c.alt),c.dead])),sp:()=>JSON.stringify(cars.filter(c=>c.mode==="ai").slice(0,14).map(c=>Math.round(c.sp))),enter:i=>{const sh=SHOPS[i];sh.lock=true;enterShop(sh)},ROBx:()=>ROB&&ROB.t,IN:()=>inside};
+window.__dbg={P,cars,peds,SHOPS,M:()=>M,hour:h=>{hour=h},err:()=>window.__glerr,tp:(x,y,a)=>{P.x=x;P.y=y;if(a!==undefined){P.a=a;cam.head=a}},st:()=>({wanted:P.wanted,hp:P.hp,money:P.money,car:P.car&&P.car.type,swim:P.swim,armor:P.armor,rob:!!ROB,shop:!!shop,inside:!!inside,base:baseAlert,n:cars.length,peds:peds.length}),buy:i=>{P.money=9999;buyWeapon(i)},shopopen:()=>{shop={}},gs:()=>GS,pp:()=>PP.ok,rain:v=>{RAIN=rainTgt=v;rainClock=999},flash:()=>{flashT=.4},cm:()=>{copManager(.016);return cars.filter(c=>c.mode==="air").length},la:()=>copManager.lastAir,air:()=>JSON.stringify(cars.filter(c=>c.mode==="air").map(c=>[Math.round(c.x),Math.round(c.y),Math.round(c.alt),c.dead])),sp:()=>JSON.stringify(cars.filter(c=>c.mode==="ai").slice(0,14).map(c=>Math.round(c.sp))),enter:i=>{const sh=SHOPS[i];sh.lock=true;enterShop(sh)},ROBx:()=>ROB&&ROB.t,IN:()=>inside};
 </script>
 </body>
 </html>
