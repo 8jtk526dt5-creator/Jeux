@@ -955,7 +955,12 @@ function updatePlayer(dt){
     P.vx=Math.cos(P.a)*spd;P.vy=Math.sin(P.a)*spd;P.face=P.a;
     if(spd)P.anim+=dt*Math.abs(spd)*.09;
     {const ttx=Math.floor(P.x/TS),tty=Math.floor(P.y/TS);P.swim=!oob(ttx,tty)&&tiles[tty*N+ttx]===TW}
-    if(P.swim){P.vx*=.5;P.vy*=.5}
+    if(P.swim){
+      P.vx*=.78;P.vy*=.78;P.swimT=(P.swimT||0)-dt;
+      if(!P.wasSwim){toast('À LA NAGE',1400);for(let i=0;i<10;i++)parts.push({x:P.x+rnd(-8,8),y:P.y+rnd(-8,8),vx:0,vy:0,life:1,max:1,r:5+rnd(0,5),foam:true})}
+      if(P.swimT<=0&&(Math.abs(P.vx)+Math.abs(P.vy)>10)){P.swimT=.1;parts.push({x:P.x-Math.cos(P.a)*6,y:P.y-Math.sin(P.a)*6,vx:0,vy:0,life:.9,max:.9,r:4+rnd(0,3),foam:true})}
+    }
+    P.wasSwim=P.swim;
     P.x+=P.vx*dt;P.y+=P.vy*dt;pushOut(P,7,2);
     P.shootT-=dt;
     if(inp.fire&&P.shootT<=0&&!shop){
@@ -1495,7 +1500,16 @@ function flatRot(b,x,z,hx_,hz,a,y,c){
 function pedMesh(p,isP){
   YO=(isP&&P.swim&&!P.dead)?-9:0;
   if(YO)flat(T,P.x-10,P.y-10,20,20,-1.1,[1,1,1]);
-  pedMesh0(p,isP);YO=0;
+  pedMesh0(p,isP);
+  if(YO){
+    const a=P.a,ca=Math.cos(a),sa=Math.sin(a),ph=gameT*(Math.abs(P.vx)+Math.abs(P.vy)>10?6.5:2);
+    for(const sd of[-1,1]){
+      const f=ph+(sd>0?0:Math.PI),ax=Math.sin(f)*9+4,ay=19+Math.cos(f)*4;
+      const q=[P.x+ax*ca-sd*5.6*sa,P.y+ax*sa+sd*5.6*ca];
+      box(D,q[0],ay,q[1],4.6,1.2,1.4,a,hx('#e8b98c'),0);
+    }
+  }
+  YO=0;
 }
 function pedMesh0(p,isP){
   const x=p.x,z=p.y,a=isP?P.a:p.a,ca=Math.cos(a),sa=Math.sin(a);
