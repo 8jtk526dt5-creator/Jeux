@@ -432,6 +432,7 @@ function layout(){
   btns.jump={x:W-66*sc,y:H-222*sc,r:32*sc,id:-1};
   btns.cov={x:W-176*sc,y:H-214*sc,r:28*sc,id:-1};
   btns.wpn={x:W-176*sc,y:H-146*sc,r:28*sc,id:-1};
+  btns.hol={x:W-238*sc,y:H-150*sc,r:25*sc,id:-1};
 }
 function resize(){
   DPR=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;
@@ -449,6 +450,7 @@ cv.addEventListener('pointerdown',e=>{
     BM.drag={id:e.pointerId,x,y};return}
   if(!shop&&Math.hypot(x-MMH.x,y-MMH.y)<MMH.r+10&&!inside){openMap();stick.on=false;stick.dx=stick.dy=0;return}
   if(shop){for(const b of shopBtns)if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){b.act();break}return}
+  if(!P.car&&hit(btns.hol,x,y)){P.hol=!P.hol;if(P.hol){P.shootT=0}toast(P.hol?'ARME RANGÉE':WEAP[P.wi].nom,900);return}
   if(!P.car&&hit(btns.wpn,x,y)){cycleWeapon();return}
   if(!P.car&&hit(btns.jump,x,y)){btns.jump.id=e.pointerId;jumpEdge=true;return}
   if(!P.car&&hit(btns.cov,x,y)){btns.cov.id=e.pointerId;covEdge=true;return}
@@ -1187,7 +1189,7 @@ function propMesh(b,p){
 function cycleWeapon(){
   if(P.hol){P.hol=false;toast(WEAP[P.wi].nom,900);return}
   for(let i=P.wi+1;i<WEAP.length;i++)if(P.weapons[i]&&P.ammo[i]>0){P.wi=i;toast(WEAP[i].nom,900);return}
-  P.hol=true;P.wi=0;toast('ARME RANGÉE',900)
+  P.wi=0;toast(WEAP[0].nom,900)
 }
 function buyWeapon(i){
   const w=WEAP[i];
@@ -1348,15 +1350,19 @@ function updatePlayer(dt){
     if(P.punchT>0){P.vx*=.3;P.vy*=.3}
     {const ttx=Math.floor(P.x/TS),tty=Math.floor(P.y/TS);P.swim=!oob(ttx,tty)&&tiles[tty*N+ttx]===TW}
     if(P.swim){
-      P.vx*=.78;P.vy*=.78;P.swimT=(P.swimT||0)-dt;
+      {const fw=-inp.y,tg=fw>.85?(P.dive?100:122):fw>.12?64*Math.max(.6,fw):fw<-.2?-34:0;
+       P.sv=(P.sv||0)+(tg-(P.sv||0))*Math.min(1,dt*(tg===0?1.5:2.3));if(P.hol===false&&0)P.sv=0;
+       P.vx=Math.cos(P.a)*P.sv;P.vy=Math.sin(P.a)*P.sv;P.anim+=dt*Math.abs(P.sv)*.1;P.a-=inp.x*.8*dt}
+      P.swimT=(P.swimT||0)-dt;
       if(!P.wasSwim){toast('À LA NAGE',1400);for(let i=0;i<10;i++)parts.push({x:P.x+rnd(-8,8),y:P.y+rnd(-8,8),vx:0,vy:0,life:1,max:1,r:5+rnd(0,5),foam:true})}
       if(P.swimT<=0&&(Math.abs(P.vx)+Math.abs(P.vy)>10)){P.swimT=.1;parts.push({x:P.x-Math.cos(P.a)*6,y:P.y-Math.sin(P.a)*6,vx:0,vy:0,life:.9,max:.9,r:4+rnd(0,3),foam:true})}
     }
+    if(!P.swim)P.sv=0;
     P.wasSwim=P.swim;
     P.x+=P.vx*dt;P.y+=P.vy*dt;pushOut(P,7,2);pushOutProps(P,7,P.jz||0);
     P.shootT-=dt;
-    if(inp.fire&&P.hol&&!(P.punchT>0)&&!shop)startPunch(false);
-    if(inp.fire&&P.shootT<=0&&!shop&&!P.hol){
+    if(inp.fire&&P.hol&&!(P.punchT>0)&&!shop&&!P.swim)startPunch(false);
+    if(inp.fire&&P.shootT<=0&&!shop&&!P.hol&&!P.swim){
       let ang=P.a,best=null,bd=P.wi===6?900:520;
       if(P.wi>0&&P.ammo[P.wi]<=0){P.wi=0;toast('Plus de munitions',1200)}
       const wp=WEAP[P.wi];P.shootT=wp.rate;
@@ -2172,17 +2178,9 @@ function flatRot(b,x,z,hx_,hz,a,y,c){
   quad4(b,P_(-hx_,-hz),P_(hx_,-hz),P_(hx_,hz),P_(-hx_,hz),0,1,0,c,0,-1,-1,-1,-1);
 }
 function pedMesh(p,isP){
-  YO=(isP&&P.swim&&!P.dead)?-9-26*(P.dv||0):(isP?(P.jz||0):0);
+  YO=(isP&&P.swim&&!P.dead)?-3.2-26*(P.dv||0)+Math.sin(gameT*3.1)*.5:(isP?(P.jz||0):0);
   if(YO&&(P.dv||0)<.4)flat(T,P.x-10,P.y-10,20,20,-1.1,[1,1,1]);
   pedMesh0(p,isP);
-  if(YO){
-    const a=P.a,ca=Math.cos(a),sa=Math.sin(a),ph=gameT*(Math.abs(P.vx)+Math.abs(P.vy)>10?6.5:2);
-    for(const sd of[-1,1]){
-      const f=ph+(sd>0?0:Math.PI),ax=Math.sin(f)*9+4,ay=19+Math.cos(f)*4;
-      const q=[P.x+ax*ca-sd*5.6*sa,P.y+ax*sa+sd*5.6*ca];
-      box(D,q[0],ay,q[1],4.6,1.2,1.4,a,hx('#e8b98c'),0);
-    }
-  }
   YO=0;
 }
 function pedMeshOld(p,isP){
@@ -2242,7 +2240,8 @@ function pedMesh0(p,isP){
   const pants=hx(isP?'#1e2a55':p.kind==='cop'?'#14224a':p.kind==='soldier'?'#3a4527':'#2a2a3a');
   const jacD=jac.map(v=>v*.82),pantD=pants.map(v=>v*.8),shoe=p.kind==='soldier'||p.kind==='cop'?[.05,.05,.06]:[.92,.92,.94];
   let FTv=0,cF=1,sF=0;
-  const W=(lx,ly,lz)=>{if(FTv){const nx=lx*cF+ly*sF,ny=Math.max(.7,-lx*sF+ly*cF);lx=nx;ly=ny}return[x+lx*ca-lz*sa,ly,z+lx*sa+lz*ca]};
+  let SWX=0;
+  const W=(lx,ly,lz)=>{if(FTv){const nx=lx*cF+ly*sF+SWX,ny=Math.max(.7,-lx*sF+ly*cF);lx=nx;ly=ny}return[x+lx*ca-lz*sa,ly,z+lx*sa+lz*ca]};
   const SD=[-sa,0,ca];
   if(deadNow&&fT>=.5){
     const sd2=[-sa,0,ca];
@@ -2255,6 +2254,9 @@ function pedMesh0(p,isP){
     return;
   }
   if(deadNow){const f=Math.min(1,fT/.5);FTv=f*f*(3-2*f)*1.5;cF=Math.cos(FTv);sF=Math.sin(FTv)}
+  if(isP)key._swm=(key._swm||0)+(((P.swim&&!deadNow)?1:0)-(key._swm||0))*Math.min(1,dtF*6);
+  const swm=isP&&!deadNow?(key._swm||0):0;
+  if(swm>.02){FTv=swm*1.34;cF=Math.cos(FTv);sF=Math.sin(FTv);SWX=-13*swm}
   const ph=isP?P.anim:p.walk,t=gameT,seed=isP?1.7:p.walk*0.37;
   const pu=(isP&&P.punchT>0)?1-P.punchT/P.punchDur:-1,fight=isP&&P.fightT>0&&P.hol&&!deadNow;
   const ext=pu<0?0:(pu<.3?-(pu/.3)*.35:pu<.55?lerp(-.35,1,(pu-.3)/.25):lerp(1,0,(pu-.55)/.45));
@@ -2287,7 +2289,7 @@ function pedMesh0(p,isP){
   limb(D,W(sway,hipY+1.8,0),W(shL,shY,0),5,2.7,jac,hd,0);
   if(isP)limb(D,W(shL*.72+sway*.28,hipY+6.8,0),W(shL*.8+sway*.2,hipY+7.9,0),5.15,2.9,[.18,.94,1],hd,.6);
   // bras
-  const armed=!deadNow&&((isP&&!P.hol)||p.hostile),hg=[];
+  const armed=!deadNow&&((isP&&!P.hol&&swm<.3)||p.hostile),hg=[];
   const gripY=shY-1.6;
   for(const sd of[1,-1]){
     const sx=shL-sd*5.1*Math.sin(tw),sz=sd*5.1*Math.cos(tw),sy=shY-.9;
@@ -2297,6 +2299,10 @@ function pedMesh0(p,isP){
     else if(pu>=0&&sd===psd){
       if(!hook){const xEl=[sx+6.8,sy-1.8,sd*3.6],xHa=[sx+13.2,sy-.4,sd*1.8];el=gEl.map((v,i)=>lerp(v,xEl[i],ext));ha=gHa.map((v,i)=>lerp(v,xHa[i],ext))}
       else{const xEl=[sx+5.5,sy-1.4,sd*8],xHa=[sx+8.5,sy-.3,sd*-.5],e2=Math.max(ext,-.35);el=gEl.map((v,i)=>lerp(v,xEl[i],e2));ha=gHa.map((v,i)=>lerp(v,xHa[i],e2));if(e2<0){ha[2]=sd*(4+(-e2)*9)}}
+    }
+    else if(swm>.3){
+      const f=ph*.55+(sd>0?0:Math.PI),cs=Math.cos(f),sn=Math.sin(f),mv=Math.min(1,sp/50);
+      el=[sx+(mv*5.2*sn)+1.5,sy-3.6*cs*(.4+.6*mv)-(sn<0?0:0),sd*(5.6+(cs>0?1.5:0))];ha=[sx+mv*10.5*sn+3,sy-(.5+8.5*mv)*cs,sd*(5.8+(cs>0?2:0))];
     }
     else if(stg>0){el=[sx-1.5,sy+1,sd*7.8];ha=[sx-3.2,sy+4.4,sd*9]}
     else if(fight||pu>=0){el=gEl;ha=gHa}
@@ -2879,7 +2885,8 @@ function drawHUD(){
   btn(btns.fire,P.car?(sp_.heli?'HAUT':sp_.tank?'TIR':'NITRO'):'TIR',P.car?'#ffd23f':'#2ff0ff',btns.fire.id>=0,false);
   if(P.car)btn(btns.brake,sp_.heli?'BAS':'FREIN','#7dffb0',btns.brake.id>=0,false);
   if(!P.car){btn(btns.jump,'SAUT','#7dffb0',btns.jump.id>=0,P.swim);btn(btns.cov,P.crouch?'DEBOUT':'COUVERT','#ffd23f',!!P.crouch,P.swim)}
-  else{
+  if(!P.car){
+    btn(btns.hol,P.hol?'SORTIR':'RANGER','#ff7a7a',!!P.hol,false);
     btn(btns.wpn,'','#ffa63f',false,false);
     if(P.hol){txt('RANGÉE',btns.wpn.x,btns.wpn.y-6,9,'#fff','center',3);txt('✋',btns.wpn.x,btns.wpn.y+8,14,'#ffd27a','center',3)}else{const wp=WEAP[P.wi];txt(wp.court,btns.wpn.x,btns.wpn.y-6,9.5,'#fff','center',3);txt(P.wi===0?'∞':String(P.ammo[P.wi]),btns.wpn.x,btns.wpn.y+8,12,'#ffd27a','center',3)}
   }
