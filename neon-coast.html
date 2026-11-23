@@ -2855,5 +2855,27 @@ glInit();window.__glReady=true;resize();
 requestAnimationFrame(frame);
 window.__dbg={P,cars,peds,SHOPS,M:()=>M,hour:h=>{hour=h},err:()=>window.__glerr,tp:(x,y,a)=>{P.x=x;P.y=y;if(a!==undefined){P.a=a;cam.head=a}},st:()=>({wanted:P.wanted,hp:P.hp,money:P.money,car:P.car&&P.car.type,swim:P.swim,armor:P.armor,rob:!!ROB,shop:!!shop,inside:!!inside,base:baseAlert,n:cars.length,peds:peds.length}),buy:i=>{P.money=9999;buyWeapon(i)},shopopen:()=>{shop={}},fau:()=>fauna.length,tpf:t=>{const f=fauna.find(q=>q.type===t);if(f){P.x=f.x-90;P.y=f.y;P.a=0;cam.head=0}return f&&[Math.round(f.x),Math.round(f.y)]},sbn:()=>SBn,gs:()=>GS,pp:()=>PP.ok,rain:v=>{RAIN=rainTgt=v;rainClock=999},flash:()=>{flashT=.4},cm:()=>{copManager(.016);return cars.filter(c=>c.mode==="air").length},la:()=>copManager.lastAir,air:()=>JSON.stringify(cars.filter(c=>c.mode==="air").map(c=>[Math.round(c.x),Math.round(c.y),Math.round(c.alt),c.dead])),sp:()=>JSON.stringify(cars.filter(c=>c.mode==="ai").slice(0,14).map(c=>Math.round(c.sp))),enter:i=>{const sh=SHOPS[i];sh.lock=true;enterShop(sh)},ROBx:()=>ROB&&ROB.t,IN:()=>inside};
 </script>
+<!-- bouton-accueil -->
+<style>
+#homeBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:calc(env(safe-area-inset-right,0px) + 6px);z-index:2147483000;
+  min-width:36px;height:36px;padding:0 10px;border-radius:18px;border:2px solid rgba(255,255,255,.7);background:rgba(20,10,40,.6);
+  color:#fff;font:700 15px/1 -apple-system,system-ui,sans-serif;opacity:.6;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
+#homeBtn[data-arm]{opacity:1;background:#c0183f;border-color:#fff}
+</style>
+<button id="homeBtn" type="button" aria-label="Retour à l'accueil">&#8962;</button>
+<script>
+(function(){
+  var b=document.getElementById('homeBtn'),t;
+  ['touchstart','touchend','pointerdown','pointerup','mousedown','mouseup'].forEach(function(ev){
+    b.addEventListener(ev,function(e){e.stopPropagation();});
+  });
+  b.addEventListener('click',function(e){
+    e.stopPropagation();e.preventDefault();
+    if(b.hasAttribute('data-arm')){location.href='index.html';return;}
+    b.setAttribute('data-arm','1');b.textContent='⌂ QUITTER ?';
+    t=setTimeout(function(){b.removeAttribute('data-arm');b.innerHTML='&#8962;';},3000);
+  });
+})();
+</script>
 </body>
 </html>

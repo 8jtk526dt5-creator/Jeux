@@ -2441,3 +2441,25 @@ function loop(now){
 requestAnimationFrame(loop);
 
 </script>
+<!-- bouton-accueil -->
+<style>
+#homeBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:calc(env(safe-area-inset-right,0px) + 6px);z-index:2147483000;
+  min-width:36px;height:36px;padding:0 10px;border-radius:18px;border:2px solid rgba(255,255,255,.7);background:rgba(20,10,40,.6);
+  color:#fff;font:700 15px/1 -apple-system,system-ui,sans-serif;opacity:.6;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
+#homeBtn[data-arm]{opacity:1;background:#c0183f;border-color:#fff}
+</style>
+<button id="homeBtn" type="button" aria-label="Retour à l'accueil">&#8962;</button>
+<script>
+(function(){
+  var b=document.getElementById('homeBtn'),t;
+  ['touchstart','touchend','pointerdown','pointerup','mousedown','mouseup'].forEach(function(ev){
+    b.addEventListener(ev,function(e){e.stopPropagation();});
+  });
+  b.addEventListener('click',function(e){
+    e.stopPropagation();e.preventDefault();
+    if(b.hasAttribute('data-arm')){location.href='index.html';return;}
+    b.setAttribute('data-arm','1');b.textContent='⌂ QUITTER ?';
+    t=setTimeout(function(){b.removeAttribute('data-arm');b.innerHTML='&#8962;';},3000);
+  });
+})();
+</script>
