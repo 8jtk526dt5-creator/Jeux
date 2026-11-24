@@ -1342,7 +1342,9 @@ function updatePlayer(dt){
   }else{
     if(P.crouch&&P.cover){const nn=nearestCover(P.x,P.y);if(!nn||nn.d>16)P.cover=null;else P.cover=nn}
     const inCov=!!(P.crouch&&P.cover);
-    if(inCov)P.a=Math.atan2(-P.cover.ny,-P.cover.nx);else P.a+=inp.x*2.7*dt;
+    if(inCov)P.a=Math.atan2(-P.cover.ny,-P.cover.nx);else{const ix=Math.abs(inp.x)<.08?0:inp.x,fw0=-inp.y,tr=ix*(fw0>.85?2.5:fw0>.12?3.1:3.9)*(P.crouch?.7:1);
+      P.av=(P.av||0)+(tr-(P.av||0))*Math.min(1,dt*(tr===0?12:8));if(Math.abs(P.av)<.02&&tr===0)P.av=0;P.a+=P.av*dt;
+      if(!P.swim&&Math.abs(P.av)>.35&&fw0<=.12)P.anim+=dt*Math.abs(P.av)*2.3}
     const fwd=-inp.y;let spd=0;
     if(fwd>.85)spd=135;else if(fwd>.12)spd=80*Math.max(.55,fwd);else if(fwd<-.2)spd=-55;
     if(inCov){const sg=Math.abs(inp.x)<.15?0:inp.x;P.vx=P.cover.ny*sg*52;P.vy=-P.cover.nx*sg*52;P.face=P.a;if(sg)P.anim+=dt*Math.abs(sg)*40*.09}
@@ -2262,7 +2264,7 @@ function pedMesh0(p,isP){
   const ext=pu<0?0:(pu<.3?-(pu/.3)*.35:pu<.55?lerp(-.35,1,(pu-.3)/.25):lerp(1,0,(pu-.55)/.45));
   const crouch=isP&&P.crouch&&!deadNow,air=isP&&P.jz>.5&&!deadNow;
   const psd=isP&&P.punchSide?-1:1,hook=isP&&P.punchN%3===0,stg=(!isP&&p.stag>0)?p.stag/.35:0;
-  const k=Math.min(1,sp/40),run=Math.max(0,Math.min(1,(sp-75)/45));
+  const avv=isP&&!deadNow?(P.av||0):0,k=Math.min(1,Math.max(sp/40,(isP&&!P.swim&&!P.car)?Math.min(.5,Math.abs(avv)*.2):0)),run=Math.max(0,Math.min(1,(sp-75)/45));
   const A=k*(.5+.42*run);
   const L1=5.3,L2=5.1;
   // jambes
@@ -2281,7 +2283,7 @@ function pedMesh0(p,isP){
     const ft=W(an[0]+1.3,Math.max(.9,an[1]-.2),an[2]);box(D,ft[0],ft[1],ft[2],2.3,.9,1.55,a,shoe,0);
   }
   // bassin + buste (torsion opposee aux hanches)
-  const lean=.06+run*.34+k*.05+(crouch?.25:0)+(air?.1:0)+Math.max(ext,0)*.15-Math.min(stg,1)*.34,tw=Math.sin(ph)*.2*k+(pu>=0?psd*-.6*ext*(hook?.9:1):0);
+  const lean=.06+run*.34+k*.05+(crouch?.25:0)+(air?.1:0)+Math.max(ext,0)*.15-Math.min(stg,1)*.34,tw=Math.sin(ph)*.2*k+Math.max(-.3,Math.min(.3,avv*.1))+(pu>=0?psd*-.6*ext*(hook?.9:1):0);
   const breath=Math.sin(t*1.7+seed)*.18*(1-k*.6);
   const shL=Math.sin(lean)*9.6+sway*.6,shY=hipY+Math.cos(lean)*9.6+breath;
   limb(D,W(sway,hipY-.9,0),W(sway,hipY+2.2,0),4.3,2.5,pants,SD,0);
@@ -2323,6 +2325,7 @@ function pedMesh0(p,isP){
   let lkT=Math.sin(t*.55+seed*3)*.55*(1-k*.7)+Math.sin(t*1.9+seed)*.06;
   if(!isP&&!deadNow&&Math.hypot(P.x-x,P.y-z)<260)lkT=clamp(angDiff(a,Math.atan2(P.y-z,P.x-x)),-1,1)*.9;
   if(stg>0)lkT=-.3*Math.sin(t*40);
+  if(isP&&!deadNow)lkT+=Math.max(-.35,Math.min(.35,avv*.14));
   key._lk=key._lk===undefined?lkT:key._lk+(lkT-key._lk)*Math.min(1,dtF*7);const lk=key._lk;
   const hdA=a+lk,hc=W(shL+Math.sin(lean)*1.8,shY+3.9+Math.sin(ph*2)*.1*k,0);
   box(D,hc[0],hc[1],hc[2],3,3,3,hdA,skin,0);
