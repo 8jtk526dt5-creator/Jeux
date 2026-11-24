@@ -470,7 +470,8 @@ cv.addEventListener('pointerdown',e=>{
     if(BM.ptrs.size>=2){const[a,b]=[...BM.ptrs.values()];BM.drag=null;BM.pinch={d0:Math.hypot(a.x-b.x,a.y-b.y)||1,z0:BM.z,mx:(a.x+b.x)/2,my:(a.y+b.y)/2}}
     else{
       const now=performance.now();
-      if(BM.tap&&now-BM.tap.t<380&&Math.hypot(x-BM.tap.x,y-BM.tap.y)<28){bmZoomAt(x,y,BM.z>3?1:BM.z*2.2);BM.tap=null;BM.drag=null;return}
+      BM.down={x,y,t:now,id:e.pointerId};clearTimeout(BM.lp);BM.lp=setTimeout(()=>{if(BM.on&&BM.down&&BM.ptrs.size===1){const d=BM.ptrs.get(BM.down.id);if(d&&Math.hypot(d.x-BM.down.x,d.y-BM.down.y)<10){if(bmPlace(d.x,d.y,false))BM.down=null}}},520);
+      if(!BM.place&&bmWpAt(x,y)<0&&BM.tap&&now-BM.tap.t<380&&Math.hypot(x-BM.tap.x,y-BM.tap.y)<28){bmZoomAt(x,y,BM.z>3?1:BM.z*2.2);BM.tap=null;BM.drag=null;return}
       BM.tap={t:now,x,y};BM.drag={id:e.pointerId,x,y}}
     return}
   if(!shop&&Math.hypot(x-MMH.x,y-MMH.y)<MMH.r+10&&!inside){openMap();stick.on=false;stick.dx=stick.dy=0;return}
@@ -511,6 +512,7 @@ cv.addEventListener('pointermove',e=>{
 function up(e){
   if(camDrag&&e.pointerId===camDrag.id)camDrag=null;
   if(BM.drag&&e.pointerId===BM.drag.id)BM.drag=null;
+  if(BM.down&&BM.down.id===e.pointerId){const d=BM.down;BM.down=null;clearTimeout(BM.lp);if(BM.on&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<10&&performance.now()-d.t<350&&!BM.pinch)bmPlace(e.clientX,e.clientY,true)}
   if(BM.ptrs.has(e.pointerId)){BM.ptrs.delete(e.pointerId);BM.pinch=null;
     if(BM.ptrs.size===1){const[k,v]=[...BM.ptrs.entries()][0];BM.drag={id:k,x:v.x,y:v.y}}}
   if(stick.on&&e.pointerId===stick.id){stick.on=false;stick.dx=stick.dy=0;stick.id=-1}
@@ -1070,6 +1072,7 @@ function lightState(horiz,kx,ky){let p=(gameT+kx*3+ky*5)%20;if(!horiz)p=(p+10)%2
 let ROB=null,shop=null,shopBtns=[],baseAlert=false,inside=null;
 const OX=-3000,OZ=-3000,RW=300,RD=240;
 
+const WPTS=[],WCOL=['#ff3fa4','#2ff0ff','#ffd23f','#7dffb0','#b86bff','#ff8a3f'];
 const SAVE_KEY='neoncoast_save_v1';let saveT=10,saveFlash=0,TBTN=[],titleSave=null;
 function readSave(){try{const t=localStorage.getItem(SAVE_KEY);if(!t)return null;const o=JSON.parse(t);return o&&o.v===1&&isFinite(o.x)&&isFinite(o.y)?o:null}catch(_){return null}}
 function saveGame(manual){
@@ -1077,6 +1080,7 @@ function saveGame(manual){
     if(state!=='play'||P.dead)return;
     let x=P.x,y=P.y,a=P.a;if(inside){x=inside.sh.x;y=inside.sh.y+46;a=Math.PI/2}
     const o={v:1,t:Date.now(),money:P.money|0,hp:P.hp,armor:P.armor,weapons:P.weapons,ammo:P.ammo,wi:P.wi,hol:!!P.hol,kills:P.kills|0,x,y,a,hour,muted,
+      wp:WPTS.map(w=>[w.x|0,w.y|0]),
       car:P.car&&!inside?{type:P.car.type,color:P.car.color}:null};
     localStorage.setItem(SAVE_KEY,JSON.stringify(o));
     if(manual)toast('PARTIE SAUVEGARDÉE',1500);else saveFlash=1.4;
@@ -1090,13 +1094,14 @@ function loadGame(){
   let x=o.x,y=o.y;if(x<0||y<0||x>WS||y>WS||blockPx(x,y)){x=HOSP.x;y=HOSP.y}
   P.x=x;P.y=y;P.a=+o.a||0;P.face=P.a;P.vx=P.vy=0;P.car=null;P.wanted=0;heat=0;P.dead=false;P.swim=false;P.dive=false;
   if(isFinite(o.hour))hour=o.hour;
+  WPTS.length=0;if(Array.isArray(o.wp))for(const q of o.wp.slice(0,6))if(q&&isFinite(q[0])&&isFinite(q[1]))WPTS.push({x:+q[0],y:+q[1]});
   cam.x=x;cam.y=y;cam.head=P.a;cam.off=0;cam.pit=0;rot=-cam.head-Math.PI/2;
   if(o.car&&SPEC[o.car.type]&&!SPEC[o.car.type].tank)mkCar(o.car.type,x+Math.cos(P.a+1.57)*42,y+Math.sin(P.a+1.57)*42,P.a,'idle',o.car.color);
   helpT=0;toast('PARTIE CHARGÉE',1600);return true;
 }
 function startGame(cont){
   initAudio();state='play';
-  if(cont)loadGame();else{try{localStorage.removeItem(SAVE_KEY)}catch(_){}}
+  if(cont)loadGame();else{WPTS.length=0;try{localStorage.removeItem(SAVE_KEY)}catch(_){}}
   titleSave=null;
 }
 titleSave=readSave();
@@ -2639,6 +2644,7 @@ function buildDyn(ex,ez,night){
   const pul=1+Math.sin(gameT*4)*.08;
   if(!M){for(const v of GIV){if(v.cd>0)continue;const dx=v.x-ex,dz=v.y-ez;if(dx*dx+dz*dz>5e6)continue;cyl(T,v.x,0,v.y,24*pul,210,[1,.82,.2],1,12);glowAt(v.x,6,v.y,150,[1,.8,.2].map(q=>q*.7));glowAt(v.x,100,v.y,90,[1,.8,.2].map(q=>q*.35))}}
   else{cyl(T,M.x,0,M.y,28*pul,260,[1,.9,.3],1,12);glowAt(M.x,6,M.y,170,[1,.9,.3].map(q=>q*.8));glowAt(M.x,120,M.y,100,[1,.9,.3].map(q=>q*.4))}
+  for(let i=0;i<WPTS.length;i++){const w=WPTS[i],dx=w.x-ex,dz=w.y-ez;if(dx*dx+dz*dz>9e7)continue;const c3=hx(WCOL[i]);cyl(T,w.x,0,w.y,13*pul,240,c3,1,10);glowAt(w.x,6,w.y,110,c3.map(q=>q*.7));glowAt(w.x,110,w.y,70,c3.map(q=>q*.35))}
   // particules
   for(const p of parts){
     const k=clamp(p.life/p.max,0,1);
@@ -2840,6 +2846,7 @@ function drawLabels(){
   {const d=Math.hypot(P.x-15*TS,P.y-55*TS);if(d<1200&&d>260){const sc2=w2s(15*TS,150,BY0*TS);if(sc2)txt('BASE MILITAIRE',sc2[0],sc2[1],16,'#ff5a5a','center',5)}}
   if(!M){for(const v of GIV)if(v.cd<=0)lab(v.x,250,'M','#ffd23f',v.y)}
   else lab(M.x,300,'◆','#ffe14d',M.y);
+  for(let i=0;i<WPTS.length;i++)lab(WPTS[i].x,270,String(i+1),WCOL[i],WPTS[i].y);
 }
 
 /* ----------------------------- HUD ----------------------------- */
@@ -2867,6 +2874,7 @@ function drawMinimap(){
   for(const c of cars)if((c.type==='boat'||c.type==='jetski')&&c.mode==='idle'&&Math.hypot(c.x-cam.x,c.y-cam.y)<(mR-8)/s)blip(c.x,c.y,'#2ff0ff',3);
   if(!M)for(const v of GIV)if(v.cd<=0)blip(v.x,v.y,'#ffd23f',5);
   if(M)blip(M.x,M.y,'#ffe14d',6.5);
+  for(let i=0;i<WPTS.length;i++)blip(WPTS[i].x,WPTS[i].y,WCOL[i],5.5);
   const f=Math.floor(gameT*5)&1;
   for(const c of cars)if(c.mode==='cop')blip(c.x,c.y,f?'#ff3a3a':'#3a6cff',4);
   for(const p of peds)if(p.kind==='cop'&&!p.dead)blip(p.x,p.y,'#6ab0ff',2.5);
@@ -2910,7 +2918,15 @@ function drawShop(){
   shopBtns.push({x:W/2-cwid/2,y:cy,w:cwid,h:44,act:()=>{shop=null}});
 }
 
-const BM={on:false,z:1,cx:0,cy:0,drag:null,btns:[],lab:null,ptrs:new Map(),pinch:null,tap:null};
+const BM={on:false,z:1,cx:0,cy:0,drag:null,btns:[],lab:null,ptrs:new Map(),pinch:null,tap:null,place:false,down:null,lp:null};
+function bmWorld(x,y){const{top,bot}=bmRegion(),s=Math.min(W,bot-top)/WS*BM.z;return{x:BM.cx+(x-W/2)/s,y:BM.cy+(y-(top+bot)/2)/s,s}}
+function bmWpAt(x,y){const{top,bot}=bmRegion(),s=Math.min(W,bot-top)/WS*BM.z;for(let i=WPTS.length-1;i>=0;i--){const px=W/2+(WPTS[i].x-BM.cx)*s,py=(top+bot)/2+(WPTS[i].y-BM.cy)*s-14;if(Math.hypot(x-px,y-py)<20)return i}return -1}
+function bmPlace(x,y,tap){
+  const{top,bot}=bmRegion();if(y<top||y>bot-60)return false;
+  const k=bmWpAt(x,y);if(k>=0){if(tap){WPTS.splice(k,1);toast('REPÈRE RETIRÉ',900);return true}return false}
+  if(!(BM.place||!tap))return false;
+  if(WPTS.length>=6){toast('6 REPÈRES MAXIMUM',1200);BM.place=false;return true}
+  const w=bmWorld(x,y);WPTS.push({x:clamp(w.x,0,WS),y:clamp(w.y,0,WS)});BM.place=false;toast('REPÈRE '+WPTS.length+' POSÉ',1000);return true}
 function bmZoomAt(x,y,z){
   const{top,bot}=bmRegion(),base=Math.min(W,bot-top)/WS,rx=W/2,ry=(top+bot)/2,s0=base*BM.z;
   const wx=BM.cx+(x-rx)/s0,wy=BM.cy+(y-ry)/s0;BM.z=clamp(z,1,8);const s1=base*BM.z;
@@ -2926,7 +2942,7 @@ function bmLabels(){
   BM.lab.push({t:'OCÉAN',x:(N-12)*TS,y:(N*.25)*TS},{t:'OCÉAN',x:(N-12)*TS,y:(N*.6)*TS});
   return BM.lab;
 }
-function openMap(){BM.on=true;BM.z=1;BM.cx=P.x;BM.cy=P.y;BM.drag=null;BM.ptrs.clear();BM.pinch=null;if(BM.z===1){BM.cx=WS/2;BM.cy=WS/2}}
+function openMap(){BM.place=false;BM.on=true;BM.z=1;BM.cx=P.x;BM.cy=P.y;BM.drag=null;BM.ptrs.clear();BM.pinch=null;if(BM.z===1){BM.cx=WS/2;BM.cy=WS/2}}
 function drawBigMap(){
   const{top,bot}=bmRegion(),rh=bot-top,base=Math.min(W,rh)/WS,s=base*BM.z,rx=W/2,ry=(top+bot)/2;
   g.fillStyle='rgba(8,4,22,.96)';g.fillRect(0,0,W,H);
@@ -2949,15 +2965,25 @@ function drawBigMap(){
   g.save();g.translate(P.x,P.y);g.scale(1/s,1/s);g.rotate(P.a);g.fillStyle='#fff';g.strokeStyle='#ff3fa4';g.lineWidth=2;
   g.beginPath();g.moveTo(13,0);g.lineTo(-9,8);g.lineTo(-4,0);g.lineTo(-9,-8);g.closePath();g.fill();g.stroke();g.restore();
   for(const l of bmLabels()){const px=rx+(l.x-BM.cx)*s,py=ry+(l.y-BM.cy)*s;g.save();g.setTransform(DPR,0,0,DPR,0,0);g.beginPath();g.rect(0,top,W,rh);g.clip();txt(l.t,px,py,Math.max(10,Math.min(15,9+BM.z*2)),'#fff','center',4);g.restore()}
+  for(let i=0;i<WPTS.length;i++){const w=WPTS[i],px=rx+(w.x-BM.cx)*s,py=ry+(w.y-BM.cy)*s;if(px<-20||px>W+20||py<top-20||py>bot+30)continue;
+    g.save();g.setTransform(DPR,0,0,DPR,0,0);g.beginPath();g.rect(0,top,W,rh);g.clip();
+    g.fillStyle=WCOL[i];g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(px,py);g.bezierCurveTo(px-14,py-14,px-12,py-30,px,py-30);g.bezierCurveTo(px+12,py-30,px+14,py-14,px,py);g.fill();g.stroke();
+    txt(String(i+1),px,py-20,12,'#000','center',0);g.restore()}
   g.restore();
   // boutons
   BM.btns=[];
-  const bw=66,by=H-70,mk=(x,w,lbl,act,col)=>{g.fillStyle='rgba(255,255,255,.16)';rr(x,by,w,46,14);g.strokeStyle=col||'#ff3fa4';g.lineWidth=2;g.stroke();txt(lbl,x+w/2,by+23,lbl.length>2?15:24,'#fff','center',3);BM.btns.push({x,y:by,w,h:46,act})};
+  const bw=66,by=H-70,mk=(x,w,lbl,act,col,yy)=>{const by=yy===undefined?H-70:yy;g.fillStyle='rgba(255,255,255,.16)';rr(x,by,w,46,14);g.strokeStyle=col||'#ff3fa4';g.lineWidth=2;g.stroke();txt(lbl,x+w/2,by+23,lbl.length>2?15:24,'#fff','center',3);BM.btns.push({x,y:by,w,h:46,act})};
   const gp=8,tot=bw*2+84+110+gp*3,x0=(W-tot)/2;
   mk(x0,bw,'−',()=>{BM.z=Math.max(1,BM.z/1.6);if(BM.z<1.05){BM.z=1;BM.cx=BM.cy=WS/2}});
   mk(x0+bw+gp,bw,'+',()=>{BM.z=Math.min(8,BM.z*1.6)});
   mk(x0+(bw+gp)*2,84,'MOI',()=>{if(BM.z<1.3)BM.z=2.2;BM.cx=P.x;BM.cy=P.y});
   mk(x0+(bw+gp)*2+84+gp,110,'FERMER',()=>{BM.on=false},'#2ff0ff');
+  {const{top:t2,bot:b2}=bmRegion(),by2=b2-52,bw2=112;
+   const hint=BM.place?'Touche la carte pour poser':WPTS.length?'Touche un repère pour le retirer':'Appui long sur la carte = repère';
+   g.save();g.globalAlpha=.9;txt(hint,W/2,by2-12,12,'#ffe6f5','center',4);g.restore();
+   const gx=(W-(bw2*2+gp))/2;
+   mk(gx,bw2,BM.place?'ANNULER':'+ REPÈRE',()=>{BM.place=!BM.place;if(BM.place)toast('Touche la carte pour poser un repère',1600)},BM.place?'#ffd23f':'#7dffb0',by2);
+   mk(gx+bw2+gp,bw2,'EFFACER',()=>{WPTS.length=0;BM.place=false;toast('REPÈRES EFFACÉS',1200)},'#ff5a5a',by2)}
   // légende
   const lg=[['#5aff9a','24/7'],['#ff5a5a','Armes'],['#ffa63f','Burger'],['#ffd23f','Mission'],['#ff2a5a','Hôpital'],['#7a9a45','Base'],['#2ff0ff','Bateau']];
   let lx=10;const ly=H-84+8;g.save();
