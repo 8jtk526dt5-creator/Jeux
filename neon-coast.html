@@ -466,7 +466,13 @@ cv.addEventListener('pointerdown',e=>{
   const x=e.clientX,y=e.clientY;
   if(BM.on){
     for(const b of BM.btns)if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){b.act();return}
-    BM.drag={id:e.pointerId,x,y};return}
+    BM.ptrs.set(e.pointerId,{x,y});
+    if(BM.ptrs.size>=2){const[a,b]=[...BM.ptrs.values()];BM.drag=null;BM.pinch={d0:Math.hypot(a.x-b.x,a.y-b.y)||1,z0:BM.z,mx:(a.x+b.x)/2,my:(a.y+b.y)/2}}
+    else{
+      const now=performance.now();
+      if(BM.tap&&now-BM.tap.t<380&&Math.hypot(x-BM.tap.x,y-BM.tap.y)<28){bmZoomAt(x,y,BM.z>3?1:BM.z*2.2);BM.tap=null;BM.drag=null;return}
+      BM.tap={t:now,x,y};BM.drag={id:e.pointerId,x,y}}
+    return}
   if(!shop&&Math.hypot(x-MMH.x,y-MMH.y)<MMH.r+10&&!inside){openMap();stick.on=false;stick.dx=stick.dy=0;return}
   if(shop){for(const b of shopBtns)if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){b.act();break}return}
   if(!P.car&&hit(btns.hol,x,y)){P.hol=!P.hol;if(P.hol){P.shootT=0}toast(P.hol?'ARME RANGÉE':WEAP[P.wi].nom,900);return}
@@ -483,6 +489,17 @@ cv.addEventListener('pointerdown',e=>{
 },{passive:false});
 cv.addEventListener('pointermove',e=>{
   e.preventDefault();
+  if(BM.on&&BM.ptrs.has(e.pointerId)){
+    BM.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(BM.pinch&&BM.ptrs.size>=2){
+      const[a,b]=[...BM.ptrs.values()],d=Math.hypot(a.x-b.x,a.y-b.y)||1,mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+      const{top,bot}=bmRegion(),base=Math.min(W,bot-top)/WS,rx=W/2,ry=(top+bot)/2,s0=base*BM.z;
+      const wx=BM.cx+(BM.pinch.mx-rx)/s0,wy=BM.cy+(BM.pinch.my-ry)/s0;
+      BM.z=clamp(BM.pinch.z0*d/BM.pinch.d0,1,8);const s1=base*BM.z;
+      BM.cx=clamp(wx-(mx-rx)/s1,0,WS);BM.cy=clamp(wy-(my-ry)/s1,0,WS);BM.pinch.mx=mx;BM.pinch.my=my;BM.pinch.z0=BM.z;BM.pinch.d0=d;
+      if(BM.z<1.02){BM.z=1;BM.cx=BM.cy=WS/2}
+      return}
+  }
   if(BM.on){if(BM.drag&&e.pointerId===BM.drag.id){const{top,bot}=bmRegion(),s=Math.min(W,bot-top)/WS*BM.z;BM.cx-=(e.clientX-BM.drag.x)/s;BM.cy-=(e.clientY-BM.drag.y)/s;BM.cx=clamp(BM.cx,0,WS);BM.cy=clamp(BM.cy,0,WS);BM.drag.x=e.clientX;BM.drag.y=e.clientY}return}
   if(camDrag&&e.pointerId===camDrag.id){const dx=e.clientX-camDrag.x,dy=e.clientY-camDrag.y;camDrag.x=e.clientX;camDrag.y=e.clientY;cam.off+=dx*.0085;cam.off=Math.atan2(Math.sin(cam.off),Math.cos(cam.off));cam.pit=clamp(cam.pit+dy*.004,-.28,1);return}
   if(stick.on&&e.pointerId===stick.id){
@@ -494,6 +511,8 @@ cv.addEventListener('pointermove',e=>{
 function up(e){
   if(camDrag&&e.pointerId===camDrag.id)camDrag=null;
   if(BM.drag&&e.pointerId===BM.drag.id)BM.drag=null;
+  if(BM.ptrs.has(e.pointerId)){BM.ptrs.delete(e.pointerId);BM.pinch=null;
+    if(BM.ptrs.size===1){const[k,v]=[...BM.ptrs.entries()][0];BM.drag={id:k,x:v.x,y:v.y}}}
   if(stick.on&&e.pointerId===stick.id){stick.on=false;stick.dx=stick.dy=0;stick.id=-1}
   if(btns.act.id===e.pointerId)btns.act.id=-1;
   if(btns.jump.id===e.pointerId)btns.jump.id=-1;
@@ -1421,6 +1440,10 @@ function updatePed(p,dt){
   if(p.stag>0){p.stag-=dt;const nx=p.x+p.sx*dt,ny=p.y+p.sy*dt;if(!blockPx(nx,ny)){p.x=nx;p.y=ny}p.sx*=Math.exp(-6*dt);p.sy*=Math.exp(-6*dt);p.sp=0;return}
   const dp=Math.hypot(P.x-p.x,P.y-p.y);
   let vx=0,vy=0;
+  const okT=t=>{const tx_=Math.floor(t[0]/TS),ty_=Math.floor(t[1]/TS);
+      if(tx_<0||ty_<0||tx_>=N||ty_>=N)return false;const tt=tiles[ty_*N+tx_];
+      if(propHit(t[0],t[1],5))return false;
+      if(tt===TB||tt===TW||tt===TF)return false;if(p.hostile||p.flee>0||p.kind==='gang')return true;return tt!==TR&&tt!==TC&&tt!==TGT};
   if(p.hostile&&!P.dead){
     const a=Math.atan2(P.y-p.y,P.x-p.x);p.a=a;
     const want=p.kind==='gang'?190:210;
@@ -1434,24 +1457,32 @@ function updatePed(p,dt){
       if(dp<600)sfxShot();
     }
   }else if(p.kind==='civ'||p.hostile===false){
-    if(p.flee>0){p.flee-=dt;vx=Math.cos(p.fa)*100;vy=Math.sin(p.fa)*100;p.a=p.fa;p.walk+=dt*10}
-    else if(p.idle>0){p.idle-=dt}
+    if(p.cv===undefined){p.cv=0;p.ta=p.a}
+    if(p.flee>0){p.flee-=dt;const da=angDiff(p.a,p.fa);p.a+=clamp(da,-9*dt,9*dt);p.ta=p.a;p.cv+=(100-p.cv)*Math.min(1,dt*7);vx=Math.cos(p.a)*p.cv;vy=Math.sin(p.a)*p.cv;p.walk+=dt*p.cv*.1}
+    else if(p.idle>0){p.idle-=dt;p.cv*=Math.exp(-6*dt);if(p.cv>3){vx=Math.cos(p.a)*p.cv;vy=Math.sin(p.a)*p.cv;p.walk+=dt*p.cv*.1}
+      else if(Math.random()<dt*.6)p.a+=rnd(-.5,.5)}
     else{
-      p.timer-=dt;if(p.timer<=0){p.a+=rnd(-1,1)*1.3;p.timer=rnd(1,3);if(Math.random()<.2)p.idle=rnd(.6,2.2)}
-      vx=Math.cos(p.a)*p.spd;vy=Math.sin(p.a)*p.spd;p.walk+=dt*p.spd*.1;
+      p.timer-=dt;
+      if(p.timer<=0){const r=Math.random();p.ta+=r<.6?rnd(-.22,.22):r<.9?(Math.random()<.5?1:-1)*Math.PI/2:Math.PI;p.timer=rnd(2.2,5.5);if(Math.random()<.16)p.idle=rnd(.8,3)}
+      const look=(an)=>okT([p.x+Math.cos(an)*30,p.y+Math.sin(an)*30]);
+      if(!look(p.ta)){for(const o of[.9,-.9,1.57,-1.57,2.4,-2.4]){if(look(p.ta+o)){p.ta+=o;break}}}
+      const da=angDiff(p.a,p.ta),ad=Math.abs(da);p.a+=clamp(da,-4.4*dt,4.4*dt);
+      const tv=p.spd*(ad>1?.2:ad>.45?.6:1);p.cv+=(tv-p.cv)*Math.min(1,dt*3.5);
+      vx=Math.cos(p.a)*p.cv;vy=Math.sin(p.a)*p.cv;p.walk+=dt*p.cv*.1;
     }
     if((p.kind==='gang'&&!p.hostile)||(p.kind==='clerk'&&!p.hostile)||(p.kind==='soldier'&&!p.hostile)){vx=vy=0;p.flee=0}
   }
   p.sp=Math.hypot(vx,vy);
   if(vx||vy){
-    const nx=p.x+vx*dt,ny=p.y+vy*dt,ok=t=>{const tt=tiles[Math.floor(t[1]/TS)*N+Math.floor(t[0]/TS)];
-      if(Math.floor(t[0]/TS)<0||Math.floor(t[1]/TS)<0||Math.floor(t[0]/TS)>=N||Math.floor(t[1]/TS)>=N)return false;
-      if(propHit(t[0],t[1],5))return false;
-      if(tt===TB||tt===TW||tt===TF)return false;if(p.hostile||p.flee>0||p.kind==='gang')return true;return tt!==TR&&tt!==TC&&tt!==TGT};
+    const nx=p.x+vx*dt,ny=p.y+vy*dt,ok=okT;
     let moved=false;
     if(ok([nx,p.y])){p.x=nx;moved=true}
     if(ok([p.x,ny])){p.y=ny;moved=true}
-    if(!moved&&!p.hostile){p.a+=Math.PI+rnd(-.8,.8);p.flee=0}
+    if(!moved&&!p.hostile){p.ta=p.a+Math.PI*(Math.random()<.5?.5:-.5)+rnd(-.4,.4);p.cv*=.3;p.flee=0}
+  }
+  if(!p.hostile&&p.kind==='civ'&&!p.dead){
+    for(const q of peds){if(q===p||q.dead)continue;const dx=p.x-q.x,dy=p.y-q.y,d2=dx*dx+dy*dy;
+      if(d2<169&&d2>.01){const dd=Math.sqrt(d2),f=(13-dd)*3.2*dt,x2=p.x+dx/dd*f,y2=p.y+dy/dd*f;if(okT([x2,y2])){p.x=x2;p.y=y2}}}
   }
 }
 function updateBullets(dt){
@@ -2879,7 +2910,14 @@ function drawShop(){
   shopBtns.push({x:W/2-cwid/2,y:cy,w:cwid,h:44,act:()=>{shop=null}});
 }
 
-const BM={on:false,z:1,cx:0,cy:0,drag:null,btns:[],lab:null};
+const BM={on:false,z:1,cx:0,cy:0,drag:null,btns:[],lab:null,ptrs:new Map(),pinch:null,tap:null};
+function bmZoomAt(x,y,z){
+  const{top,bot}=bmRegion(),base=Math.min(W,bot-top)/WS,rx=W/2,ry=(top+bot)/2,s0=base*BM.z;
+  const wx=BM.cx+(x-rx)/s0,wy=BM.cy+(y-ry)/s0;BM.z=clamp(z,1,8);const s1=base*BM.z;
+  if(BM.z<1.05){BM.z=1;BM.cx=BM.cy=WS/2;return}
+  BM.cx=clamp(wx-(x-rx)/s1,0,WS);BM.cy=clamp(wy-(y-ry)/s1,0,WS);
+}
+cv.addEventListener('wheel',e=>{if(!BM.on)return;e.preventDefault();bmZoomAt(e.clientX,e.clientY,BM.z*(e.deltaY<0?1.25:.8))},{passive:false});
 function bmRegion(){return{top:58,bot:H-84}}
 function bmLabels(){
   if(BM.lab)return BM.lab;const acc={};
@@ -2888,7 +2926,7 @@ function bmLabels(){
   BM.lab.push({t:'OCÉAN',x:(N-12)*TS,y:(N*.25)*TS},{t:'OCÉAN',x:(N-12)*TS,y:(N*.6)*TS});
   return BM.lab;
 }
-function openMap(){BM.on=true;BM.z=1;BM.cx=P.x;BM.cy=P.y;BM.drag=null;if(BM.z===1){BM.cx=WS/2;BM.cy=WS/2}}
+function openMap(){BM.on=true;BM.z=1;BM.cx=P.x;BM.cy=P.y;BM.drag=null;BM.ptrs.clear();BM.pinch=null;if(BM.z===1){BM.cx=WS/2;BM.cy=WS/2}}
 function drawBigMap(){
   const{top,bot}=bmRegion(),rh=bot-top,base=Math.min(W,rh)/WS,s=base*BM.z,rx=W/2,ry=(top+bot)/2;
   g.fillStyle='rgba(8,4,22,.96)';g.fillRect(0,0,W,H);
@@ -2917,7 +2955,7 @@ function drawBigMap(){
   const bw=66,by=H-70,mk=(x,w,lbl,act,col)=>{g.fillStyle='rgba(255,255,255,.16)';rr(x,by,w,46,14);g.strokeStyle=col||'#ff3fa4';g.lineWidth=2;g.stroke();txt(lbl,x+w/2,by+23,lbl.length>2?15:24,'#fff','center',3);BM.btns.push({x,y:by,w,h:46,act})};
   const gp=8,tot=bw*2+84+110+gp*3,x0=(W-tot)/2;
   mk(x0,bw,'−',()=>{BM.z=Math.max(1,BM.z/1.6);if(BM.z<1.05){BM.z=1;BM.cx=BM.cy=WS/2}});
-  mk(x0+bw+gp,bw,'+',()=>{BM.z=Math.min(6,BM.z*1.6)});
+  mk(x0+bw+gp,bw,'+',()=>{BM.z=Math.min(8,BM.z*1.6)});
   mk(x0+(bw+gp)*2,84,'MOI',()=>{if(BM.z<1.3)BM.z=2.2;BM.cx=P.x;BM.cy=P.y});
   mk(x0+(bw+gp)*2+84+gp,110,'FERMER',()=>{BM.on=false},'#2ff0ff');
   // légende
