@@ -32,11 +32,12 @@ const money=n=>'$'+Math.floor(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')
 
 /* ============================ MONDE ============================ */
 const TS=50,N=170,WS=N*TS,I0=6,I1=63;
-const TW=0,TSd=1,TR=2,TSW=3,TB=4,TG=5,TP=6,TC=7,TF=8,TGT=9,TFo=10,TCR=11,TCr=12;
+const TW=0,TSd=1,TR=2,TSW=3,TB=4,TG=5,TP=6,TC=7,TF=8,TGT=9,TFo=10,TCR=11,TCr=12,TAP=13;
 const R2=mulberry(777),hsh=(x,y)=>(((Math.imul(x,73856093)^Math.imul(y,19349663))>>>0)%1000)/1000;
 const pines=[],treeGrid=new Map();
 const inLandT=(tx,ty)=>ty>=64&&tx>=6&&tx<=160&&ty<=160;
 const BX0=8,BX1=21,BY0=48,BY1=61;
+const AIR={x0:100,y0:76,x1:138,y1:97};
 const inBaseT=(tx,ty)=>tx>=BX0&&tx<=BX1&&ty>=BY0&&ty<=BY1;
 const inBaseP=(x,y)=>inBaseT(Math.floor(x/TS),Math.floor(y/TS));
 const SHOPS=[],BASEB=[];
@@ -154,6 +155,18 @@ function blockType(kx,ky){
   }
   // ponton du lac
   for(let tx=83;tx<=89;tx++)for(let rw=0;rw<2;rw++){const i=(132+rw)*N+tx;tiles[i]=TP}
+  // aeroport
+  {
+    for(let ty=AIR.y0;ty<=AIR.y1;ty++)for(let tx=AIR.x0;tx<=AIR.x1;tx++)tiles[ty*N+tx]=TG;
+    const fill=(a,b,c,d,t)=>{for(let ty=b;ty<=d;ty++)for(let tx=a;tx<=c;tx++)tiles[ty*N+tx]=t};
+    fill(100,82,138,84,TAP);fill(100,87,138,87,TAP);fill(106,85,107,86,TAP);fill(132,85,133,86,TAP);
+    fill(112,88,138,92,TAP);fill(100,88,111,89,TAP);fill(121,93,132,93,TAP);fill(117,96,134,97,TAP);fill(135,97,139,97,TCR);
+    for(const q of[[101,90,5,3,92,'hangar',[176,182,190],'#2ff0ff'],[107,90,5,3,92,'hangar',[176,182,190],'#2ff0ff'],[122,94,10,2,84,'terminal',[228,232,242],'#ff3fa4'],[135,89,2,2,250,'tour',[236,236,242],'#ffd23f']]){
+      const id=buildings.length,b={x:q[0]*TS,y:q[1]*TS,w:q[2]*TS,h:q[3]*TS,z:q[4],H:q[4],col:q[6],neon:q[7],ant:false,hosp:false,mil:true,ap:q[5],kx:-1,ky:-1};
+      b.cx=b.x+b.w/2;b.cy=b.y+b.h/2;buildings.push(b);
+      for(let yy=0;yy<q[3];yy++)for(let xx=0;xx<q[2];xx++){const i=(q[1]+yy)*N+q[0]+xx;tiles[i]=TB;tileB[i]=id}
+    }
+  }
   // arbres de la campagne
   for(let ty=64;ty<=160;ty++)for(let tx=6;tx<=160;tx++){
     const t=tiles[ty*N+tx];let n=0;
@@ -214,6 +227,7 @@ function randRoadPoint(){
 }
 function districtName(x,y){
   if(inBaseP(x,y))return 'BASE MILITAIRE';
+  {const tx=Math.floor(x/TS),ty=Math.floor(y/TS);if(tx>=AIR.x0&&tx<=AIR.x1+1&&ty>=AIR.y0&&ty<=AIR.y1+1)return 'AÉROPORT DE CRISTAL'}
   {const tx=Math.floor(x/TS),ty=Math.floor(y/TS);
    if(inLandT(tx,ty)&&ty>=67&&!oob(tx,ty)){const t=tiles[ty*N+tx];return t===TW?'LAC DE CRISTAL':t===TFo?'FORÊT ÉMERAUDE':t===TCr?'CHAMPS DORÉS':t===TCR?'ROUTE DU SUD':t===TP?'PONTON DU LAC':'PRAIRIES DU SUD'}}
   {const tx=Math.floor(x/TS),ty=Math.floor(y/TS);if(!oob(tx,ty)&&tiles[ty*N+tx]===TW)return 'OCÉAN';if(!oob(tx,ty)&&tiles[ty*N+tx]===TP)return 'LA MARINA'}
@@ -229,7 +243,7 @@ function districtName(x,y){
 const mm=document.createElement('canvas');mm.width=mm.height=N*6;
 (function(){
   const m=mm.getContext('2d'),s=6;
-  const col=[ '#1d7fb0','#d8c18c','#6a6488','#4d4568','#b4509b','#2a9a68','#8b6b3d','#6f7a5e','#333','#6f7a5e','#1f6b45','#5a5470','#b59a3c' ];
+  const col=[ '#1d7fb0','#d8c18c','#6a6488','#4d4568','#b4509b','#2a9a68','#8b6b3d','#6f7a5e','#333','#6f7a5e','#1f6b45','#5a5470','#b59a3c','#4d5059' ];
   for(let ty=0;ty<N;ty++)for(let tx=0;tx<N;tx++){
     const t=tiles[ty*N+tx];m.fillStyle=col[t];
     if(t===TW)m.fillStyle=depth[ty*N+tx]>5?'#145f8a':'#1d7fb0';
@@ -321,6 +335,7 @@ const SPEC={
   bus:{l:112,w:32,top:210,acc:120,hp:280,cols:['#e8c32a','#2f7fd1','#e8e8e8'],turn:1.5,armor:.7},
   ambulance:{l:66,w:28,top:370,acc:270,hp:130,cols:['#f6f6f6']},
   firetruck:{l:98,w:32,top:270,acc:165,hp:320,cols:['#d11a1a'],turn:1.7,armor:.55},
+  plane:{l:66,w:30,top:560,acc:215,hp:150,cols:['#f2f2f2','#f5d142','#d9453b','#2f7fd1'],heli:1,plane:1,grip:5,fr:30,turn:1.25},
   jetski:{l:34,w:14,top:540,acc:380,hp:60,cols:['#ff2e93','#2ff0ff','#ffd400','#7dff6a'],grip:1.5,fr:22,turn:2.5,boat:1}
 };
 let cars=[],peds=[],bullets=[],parts=[],skids=[],pickups=[],toasts=[],shells=[];
@@ -368,6 +383,10 @@ function setupWorld(){
     if(s.lot==='1,2')continue;if(Math.random()<.4)continue;
     mkCar(pick(['sedan','sedan','sport','van','taxi','pickup','muscle','moto','pickup','ambulance','firetruck']),s.x,s.y,Math.random()<.5?-Math.PI/2:Math.PI/2,'idle');
   }
+  for(const[tx,ty,a,col]of[[115,90.3,-Math.PI/2,'#f2f2f2'],[120,90.3,-Math.PI/2,'#f5d142'],[125,90.3,-Math.PI/2,'#d9453b'],[130,90.3,-Math.PI/2,'#2f7fd1']])mkCar('plane',tx*TS,ty*TS,a,'idle',col);
+  mkCar('heli',137.4*TS,91.8*TS,-Math.PI/2,'idle','#e8e8e8');
+  for(let k=0;k<6;k++)mkCar(pick(['sedan','taxi','van','sport','sedan']),(118.8+k*2.6)*TS,96.55*TS,k&1?Math.PI/2:-Math.PI/2,'idle');
+  for(let k=0;k<8;k++){const p=mkPed('civ',(123+k*1.1)*TS,(93.2+Math.random()*.5)*TS);p.a=rnd(0,TAU)}
   spawnPickups();
   for(let i=0;i<20;i++)spawnPed(true);
   for(let i=0;i<14;i++)spawnTraffic(true);
@@ -510,14 +529,15 @@ function getInput(){
 function driveCar(c,dt,thr,steer,hb){
   const s=c.spec,top=s.top*(c.boost?1.35:1),acc=s.acc*(c.boost?2.2:1);
   let fx=Math.cos(c.a),fy=Math.sin(c.a),vf=c.vx*fx+c.vy*fy;
-  const sgn=(s.heli||vf>=0)?1:-1,k=s.heli?1:Math.min(1,Math.abs(vf)/(s.boat?50:90)),rate=(s.turn||2.7)*(1-.5*Math.min(1,Math.abs(vf)/top));
-  c.a+=steer*rate*k*sgn*dt*(hb?1.45:1);
+  const hv=s.heli&&!s.plane,sgn=(hv||vf>=0||(s.plane&&c.alt>8))?1:-1,k=hv?1:s.plane?(c.alt>8?1:Math.min(1,Math.abs(vf)/90)):Math.min(1,Math.abs(vf)/(s.boat?50:90)),rate=(s.turn||2.7)*(1-.5*Math.min(1,Math.abs(vf)/top));
+  c.sst=(c.sst||0)+(steer-(c.sst||0))*Math.min(1,dt*(Math.abs(steer)<.05?9:Math.abs(steer)>Math.abs(c.sst||0)?6.5:9));
+  c.a+=c.sst*rate*k*sgn*dt*(hb?1.45:1);
   fx=Math.cos(c.a);fy=Math.sin(c.a);
   vf=c.vx*fx+c.vy*fy;let vs=-c.vx*fy+c.vy*fx;
   if(thr>.02){vf+=thr*acc*Math.max(0,1-Math.max(0,vf)/top)*dt*1.15;if(vf<0)vf+=thr*acc*1.5*dt}
   else if(thr<-.02){if(vf>12)vf+=thr*acc*1.7*dt;else vf+=thr*acc*.6*dt*Math.max(0,1-(-vf)/(top*.35))}
   else{const d=(s.fr||140)*dt;vf=Math.abs(vf)<d?0:vf-Math.sign(vf)*d}
-  vf*=Math.exp(-.12*dt);vs*=Math.exp(-(hb?1.4:(s.grip||8)*((s.boat||s.heli)?1:(1-.35*RAIN)))*dt);if(hb)vf*=Math.exp(-.9*dt);
+  vf*=Math.exp(-.12*dt);vs*=Math.exp(-(hb?1.4:(s.grip||8)*((s.boat||s.heli)?1:(1-.35*RAIN)*(Math.abs(vs)>95?.72:1)))*dt);if(hb)vf*=Math.exp(-.9*dt);
   c.vx=fx*vf-fy*vs;c.vy=fy*vf+fx*vs;c.x+=c.vx*dt;c.y+=c.vy*dt;c.slip=Math.abs(vs);
   const sp=Math.hypot(c.vx,c.vy);
   if(!s.boat&&!s.heli&&(c.slip>70||(hb&&sp>110))&&skids.length<500&&Math.random()<.7){
@@ -946,7 +966,10 @@ function update(dt){
       case'air':airUpdate(c,dt);break;
       case'wreck':if(c.spec.heli)c.alt=Math.max(0,c.alt-140*dt);c.burnT-=dt;if(Math.random()<.6)fireP(c.x+rnd(-10,10),c.y+rnd(-6,6));if(Math.random()<.3)smoke(c.x,c.y,true);break;
     }
-    if(c.spec.boat&&!c.dead){const bs=Math.hypot(c.vx,c.vy);if(bs>30){c.foamT-=dt;if(c.foamT<=0){c.foamT=.06;parts.push({x:c.x-Math.cos(c.a)*c.spec.l*.5,y:c.y-Math.sin(c.a)*c.spec.l*.5,vx:0,vy:0,life:1.2,max:1.2,r:4+bs*.03,foam:true})}}}
+    if(c.spec.boat&&!c.dead){const bs=Math.hypot(c.vx,c.vy);if(bs>30){c.foamT-=dt;if(c.foamT<=0){c.foamT=.05;const ca_=Math.cos(c.a),sa_=Math.sin(c.a),sx=c.x-ca_*c.spec.l*.5,sy=c.y-sa_*c.spec.l*.5,sp_=Math.min(1,bs/c.spec.top);
+      parts.push({x:sx,y:sy,vx:0,vy:0,life:1.3,max:1.3,r:4+bs*.03,foam:true});
+      for(const sd of[-1,1])parts.push({x:sx,y:sy,vx:-sa_*sd*(14+30*sp_),vy:ca_*sd*(14+30*sp_),life:1.1,max:1.1,r:2.6+sp_*3,foam:true});
+      if(sp_>.55)for(const sd of[-1,1])parts.push({x:c.x+ca_*c.spec.l*.42-sa_*sd*c.spec.w*.4,y:c.y+sa_*c.spec.l*.42+ca_*sd*c.spec.w*.4,vx:-sa_*sd*40,vy:ca_*sd*40,life:.6,max:.6,r:2.4,foam:true})}}}
     if(!c.dead&&c.hp<c.spec.hp*.35&&Math.random()<dt*(c.hp<c.spec.hp*.15?14:6)){c.hp<c.spec.hp*.15?fireP(c.x+Math.cos(c.a)*c.spec.l*.35,c.y+Math.sin(c.a)*c.spec.l*.35):smoke(c.x+Math.cos(c.a)*c.spec.l*.35,c.y+Math.sin(c.a)*c.spec.l*.35,false);if(c.hp<c.spec.hp*.15)c.hp-=dt*3,c.hp<=0&&wreck(c)}
   }
   for(let i=0;i<cars.length;i++)for(let j=i+1;j<cars.length;j++)carCar(cars[i],cars[j]);
@@ -1320,7 +1343,16 @@ function updatePlayer(dt){
     const c=P.car,s=c.spec,steer=Math.abs(inp.x)<.08?0:inp.x;
     let thr=-inp.y;if(Math.abs(thr)<.12)thr=0;
     P.swim=false;
-    if(s.heli){
+    if(s.plane){
+      const sp=Math.hypot(c.vx,c.vy),gr=c.alt<4;c.boost=false;
+      if(inp.fire&&sp>190)c.altT=Math.min(650,Math.max(c.altT,c.alt)+170*dt);
+      else if(inp.brake&&!gr)c.altT=Math.max(0,Math.min(c.altT,c.alt)-200*dt);
+      else if(!gr&&sp<150)c.altT=0;
+      else c.altT=c.alt;
+      c.alt=Math.max(0,c.alt+clamp(c.altT-c.alt,-110*dt,110*dt));
+      if(gr&&inp.brake){const e=Math.exp(-2.4*dt);c.vx*=e;c.vy*=e}
+      driveCar(c,dt,thr,steer,false);carWalls(c);
+    }else if(s.heli){
       c.boost=false;
       if(inp.fire)c.altT=Math.min(650,c.altT+240*dt);
       if(inp.brake)c.altT=Math.max(0,c.altT-240*dt);
@@ -1631,6 +1663,35 @@ function walls(b,x0,z0,x1,z1,y0,y1,col,u0,nt){
   const L=[[x0,z0,x1,z0,0,-1],[x1,z0,x1,z1,1,0],[x1,z1,x0,z1,0,1],[x0,z1,x0,z0,-1,0]];
   for(const s of L){const len=Math.hypot(s[2]-s[0],s[3]-s[1]);quad4(b,[s[0],y0,s[1]],[s[2],y0,s[3]],[s[2],y1,s[3]],[s[0],y1,s[1]],s[4],0,s[5],col,0,nt?-1:u0,nt?-1:y0/208,nt?-1:u0+len/176,nt?-1:y1/208)}
 }
+function airportStatic(b){
+  const X0=AIR.x0*TS,X1=(AIR.x1+1)*TS,rz0=82*TS,rz1=85*TS,rc=rz0+TS*1.5,Wt=[.95,.95,.97],Yl=[1,.8,.15];
+  flat(b,X0,rz0+3,X1-X0,3,.45,Wt);flat(b,X0,rz1-6,X1-X0,3,.45,Wt);
+  for(let x=X0+70;x<X1-70;x+=46)flat(b,x,rc-2,26,4,.45,Wt);
+  for(const sx of[X0+10,X1-34])for(let i=0;i<8;i++)flat(b,sx,rz0+12+i*15,24,7,.45,Wt);
+  for(const sx of[X0+170,X1-230])for(const dz of[-30,30]){flat(b,sx,rc+dz-4,64,8,.45,Wt);flat(b,sx+100,rc+dz*.7-3,44,6,.45,Wt)}
+  flat(b,X0,87*TS+TS/2-1.5,X1-X0,3,.4,Yl,.25);
+  for(const cx of[107*TS,133*TS])flat(b,cx-1.5,rz1,3,3*TS,.4,Yl,.25);
+  for(const tx of[115,120,125,130])flat(b,(tx+.5)*TS-1,88*TS,2,TS*2.6,.4,Yl,.25);
+  for(let x=X0+20;x<X1;x+=64){box(b,x,.9,rz0-3,.9,.9,.9,0,[.9,.95,1],1);box(b,x,.9,rz1+3,.9,.9,.9,0,[.9,.95,1],1)}
+  for(let x=X0+30;x<X1;x+=90){box(b,x,.8,87*TS+3,.7,.7,.7,0,[.2,.4,1],1);box(b,x,.8,88*TS-3,.7,.7,.7,0,[.2,.4,1],1)}
+  for(const sx of[X0+4,X1-4])for(let i=0;i<5;i++)box(b,sx,.9,rz0+10+i*32,.9,.9,.9,0,sx<X0+10?[.2,1,.4]:[1,.2,.2],1);
+  // manche a air
+  {const px=X0+230,pz=rz0-70;box(b,px,18,pz,.9,18,.9,0,[.8,.8,.82],0);for(let k=0;k<4;k++)box(b,px+3.4+k*3.4,35-k*.7,pz,1.7,2.7-k*.45,2.7-k*.45,0,k&1?[1,1,1]:[1,.4,.1],.1)}
+  for(const bd of buildings){
+    if(!bd.ap)continue;const H=bd.H,x0=bd.x,x1=bd.x+bd.w,z0=bd.y,z1=bd.y+bd.h,cx=(x0+x1)/2,cz=(z0+z1)/2;
+    if(bd.ap==='hangar'){box(b,cx,24,z0-.7,bd.w*.36,24,.6,0,[.14,.16,.2],0);for(let k=-3;k<=3;k++)box(b,cx+k*bd.w*.1,24,z0-1.1,.5,24,.3,0,[.3,.33,.4],0);box(b,cx,H*.5,z0-1.4,bd.w*.36,1,.3,0,[1,.7,.1],.6)}
+    if(bd.ap==='terminal'){
+      box(b,cx,18,z1+.8,bd.w/2-12,13,.6,0,[.2,.55,.72],.35);box(b,cx,18,z0-.8,bd.w/2-12,13,.6,0,[.2,.55,.72],.35);
+      for(let k=-4;k<=4;k++){box(b,cx+k*bd.w*.1,18,z1+1.2,.6,13,.3,0,[.9,.92,.98],0)}
+      box(b,cx,H+10,z1+6,bd.w*.2,5,3,0,[1,.25,.65],1);box(b,cx,34,z1+14,bd.w/2-6,1,12,0,[.9,.9,.95],0);
+      for(const sx of[-1,1])box(b,cx+sx*(bd.w/2-12),17,z1+13,1.2,17,1.2,0,[.85,.85,.9],0);
+    }
+    if(bd.ap==='tour'){
+      box(b,cx,H+10,cz,30,10,30,0,[.45,.75,.9],.55);box(b,cx,H+22,cz,34,2,34,0,[.9,.9,.95],0);box(b,cx,H+36,cz,1.2,14,1.2,0,[.9,.9,.95],0);
+      box(b,cx,H+51,cz,2,2,2,0,[1,.1,.1],1);for(const q of[[1,1],[-1,1],[1,-1],[-1,-1]])box(b,cx+q[0]*8,H*.5,cz+q[1]*8,1.5,H*.5,1.5,0,[.8,.8,.85],0);
+    }
+  }
+}
 function buildStatic(){
   const b=B(850000);
   const road=[.2,.19,.29],sw1=[.55,.5,.66],sw2=[.5,.46,.62],grass1=[.18,.62,.42],grass2=[.16,.57,.38],sand=[.93,.83,.62],dark=[.16,.14,.24];
@@ -1712,6 +1773,9 @@ function buildStatic(){
         if(((tx+ty)&1)===0)box(b,cx,6,cz,1.1,3.4,1.1,0,[.85,.85,.92],.1);
       }
     }
+    else if(t===TAP){
+      flat(b,px,pz,TS,TS,.25,((tx+ty)&1)?[.37,.38,.41]:[.34,.35,.38]);flat(b,px,pz,TS,.8,.3,[.28,.28,.31]);flat(b,px,pz,.8,TS,.3,[.28,.28,.31]);
+    }
     else if(t===TC||t===TGT||t===TF){
       flat(b,px,pz,TS,TS,.2,[.4,.42,.38]);flat(b,px,pz,TS,1,.3,[.32,.34,.3]);flat(b,px,pz,1,TS,.3,[.32,.34,.3]);
       if(t===TF){
@@ -1740,7 +1804,7 @@ function buildStatic(){
     const tiered=H>380&&R()<.6,H1=tiered?H*.72:H;
     walls(b,x0,z0,x1,z1,0,H1,col,u0,!!bd.mil);
     flat(b,x0,z0,x1-x0,z1-z0,H1,roofc);
-    if(bd.mil&&(x1-x0)>120)box(b,(x0+x1)/2,16,z1+.5,(x1-x0)*.3,16,.5,0,[.08,.1,.08],0);
+    if(bd.mil&&!bd.ap&&(x1-x0)>120)box(b,(x0+x1)/2,16,z1+.5,(x1-x0)*.3,16,.5,0,[.08,.1,.08],0);
     // liseré néon
     const nh=H1-7;
     box(b,(x0+x1)/2,nh,z0-.6,(x1-x0)/2+.6,1.2,.7,0,neon,1);box(b,(x0+x1)/2,nh,z1+.6,(x1-x0)/2+.6,1.2,.7,0,neon,1);
@@ -1860,6 +1924,7 @@ function buildStatic(){
       const px=tx*TS,pz=ty*TS,m00=cdp(tx,ty),m10=cdp(tx+1,ty),m11=cdp(tx+1,ty+1),m01=cdp(tx,ty+1);
       v(px,pz,m00);v(px+TS,pz,m10);v(px+TS,pz+TS,m11);v(px,pz,m00);v(px+TS,pz+TS,m11);v(px,pz+TS,m01)}
     WBn=wb.n;WBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,WBuf);gl.bufferData(gl.ARRAY_BUFFER,wb.a.subarray(0,wb.n*12),gl.STATIC_DRAW)}
+  airportStatic(b);
   for(const pr of PROPS)propMesh(b,pr);
   SBn=b.n;SBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,SBuf);gl.bufferData(gl.ARRAY_BUFFER,b.a.subarray(0,b.n*12),gl.STATIC_DRAW);
 }
@@ -1893,7 +1958,7 @@ function glowAt(x,y,z,s,c){bill(Gb,x,y,z,s,c,0,true)}
 function boatMesh(c,night){
   const s=c.spec,l=s.l,w=s.w,a=c.a,x=c.x,z=c.y,ca=Math.cos(a),sa=Math.sin(a),col=hx(c.color),dead=c.dead;
   const lp=(lx,lz)=>[x+lx*ca-lz*sa,z+lx*sa+lz*ca],white=dead?[.15,.15,.16]:[.95,.95,1];
-  YO=dead?-4:-.5+Math.sin(gameT*2.2+x*.02)*.8;
+  const v0_=D.n;YO=dead?-4:-.5+Math.sin(gameT*2.2+x*.02)*.8;
   let q=lp(-l*.08,0);box(D,q[0],3,q[1],l*.42,3,w*.5,a,white,0);
   q=lp(l*.36,0);box(D,q[0],3,q[1],l*.17,2.6,w*.36,a,white,0);
   q=lp(l*.49,0);box(D,q[0],3,q[1],l*.06,2.2,w*.2,a,white,0);
@@ -1904,7 +1969,7 @@ function boatMesh(c,night){
   q=lp(l*.17,0);box(D,q[0],9.8,q[1],.9,2.4,w*.28,a,GLASS,0);
   q=lp(-l*.5,0);box(D,q[0],5.4,q[1],3,3.5,5,a,[.15,.15,.18],0);
   q=lp(-l*.2,w*.25);box(D,q[0],7.6,q[1],4,1.2,3,a,[.35,.25,.2],0);
-  YO=0;
+  YO=0;seaTilt(c,v0_);
   if(!dead&&night>.05&&c.mode!=='idle'){const hq=lp(l*.45,0);glowAt(hq[0]+ca*8,7,hq[1]+sa*8,52,[1,.9,.6].map(v=>v*night*.8))}
   if(!dead){const rq=lp(-l*.3,0);glowAt(rq[0],13,rq[1],10,(Math.floor(gameT*2)&1)?[1,.2,.2]:[.1,.4,.2])}
 }
@@ -1945,6 +2010,40 @@ function heliMesh(c,night){
   if(!dead&&night>.05&&al>2){const hq=lp(l*.35,0);glowAt(hq[0]+ca*8,al+10,hq[1]+sa*8,60,[1,.95,.75].map(v=>v*night*.8))}
   flatRot(T,x,z,l/2+3,w/2+3,a,.7,[0,0,0]);
 }
+function planeMesh(c,night){
+  const s=c.spec,l=s.l,a=c.a,x=c.x,z=c.y,ca=Math.cos(a),sa=Math.sin(a),col=hx(c.color),dead=c.dead,al=c.alt;
+  const lp=(lx,lz)=>[x+lx*ca-lz*sa,z+lx*sa+lz*ca],bodyc=dead?[.1,.1,.1]:col,wh=dead?[.1,.1,.1]:[.95,.95,.97],dk=[.1,.1,.12],on=((P.car===c)||c.mode==='air')&&!dead;
+  const dtc=c._rt===undefined?0:Math.min(.1,Math.max(0,gameT-c._rt));let vz=0;if(dtc>0){vz=(al-(c._pal===undefined?al:c._pal))/dtc;c._vz=(c._vz||0)+(vz-(c._vz||0))*Math.min(1,dtc*6)}c._pal=al;c._rt=gameT;
+  const v0=D.n;YO=al;let q;
+  q=lp(0,0);box(D,q[0],11,q[1],l*.38,4.6,4.6,a,wh,0);
+  q=lp(l*.36,0);box(D,q[0],10.5,q[1],l*.1,3.8,3.8,a,bodyc,0);
+  q=lp(l*.1,0);box(D,q[0],14.2,q[1],l*.14,2.6,3.3,a,GLASS,0);
+  q=lp(-l*.42,0);box(D,q[0],12.5,q[1],l*.15,2.4,2.2,a,wh,0);
+  q=lp(-l*.5,0);box(D,q[0],20,q[1],4.2,6.4,.8,a,bodyc,0);
+  q=lp(-l*.5,0);box(D,q[0],14,q[1],4,.7,13,a,bodyc,0);
+  q=lp(l*.06,0);box(D,q[0],7.4,q[1],l*.12,.9,l*.55,a,bodyc,0);
+  for(const sd of[-1,1]){q=lp(l*.06,sd*l*.5);box(D,q[0],7.6,q[1],l*.1,.8,1.2,a,[.85,.1,.1].map(v=>dead?.1:v),0)}
+  q=lp(l*.4,0);box(D,q[0],10.5,q[1],1.4,1.4,1.4,a,dk,0);
+  for(const [lx,lz] of[[l*.28,0],[-l*.04,l*.14],[-l*.04,-l*.14]]){
+    q=lp(lx,lz);box(D,q[0],5.4,q[1],.7,4.2,.7,a,dk,0);
+    const spin=(c._wsp=(c._wsp||0)+Math.hypot(c.vx,c.vy)*dtc/4);wheel(D,q[0],3.2,q[1],3.2,1.8,a,spin,1,true);
+  }
+  const rp=lp(l*.42,0),ang=(on?gameT*70:(c.rot||0));c.rot=ang;
+  if(!dead)for(let k=0;k<2;k++){const f=ang+k*Math.PI,cs=Math.cos(f),sn=Math.sin(f),R=l*.2;
+    limb(D,[rp[0]-(-sa)*R*sn,10.5-R*cs,rp[1]-ca*R*sn],[rp[0]+(-sa)*R*sn,10.5+R*cs,rp[1]+ca*R*sn],.9,.5,[.12,.12,.13],[ca,0,sa],0)}
+  const vzn=Math.max(-1,Math.min(1,(c._vz||0)/110));
+  YO=0;
+  if(!dead)tiltRange(D,v0,D.n,x,z,a,.1*Math.max(0,vzn)*(al>3?1:0)-.05*Math.max(0,-vzn),-(c.sst||0)*.32*(al>8?1:0));
+  if(on)flatRot(T,rp[0],rp[1],l*.2,l*.2,a,10.5+al,[.5,.5,.55]);
+  if(!dead){const tq=lp(-l*.5,-l*.5);glowAt(tq[0],al+14,tq[1],12,(Math.floor(gameT*1.8)&1)?[1,.1,.1]:[.1,.1,.1]);const tq2=lp(l*.06,l*.5);glowAt(tq2[0],al+8,tq2[1],14,[.1,1,.2])}
+  if(!dead&&night>.05&&al>2){const hq=lp(l*.4,0);glowAt(hq[0]+ca*10,al+9,hq[1]+sa*10,70,[1,.95,.8].map(v=>v*night*.8))}
+  flatRot(T,x,z,l/2+3,l*.5,a,.7,[0,0,0]);
+}
+function seaTilt(c,i0){
+  if(c.dead)return;const s=c.spec,a=c.a,sp=Math.hypot(c.vx,c.vy),fr=Math.min(1,sp/s.top),x=c.x,z=c.y;
+  const w1=Math.sin(gameT*1.6+x*.012+z*.017)*.028,w2=Math.sin(gameT*2.5+z*.021-x*.009)*.026;
+  tiltRange(D,i0,D.n,x,z,a,.13*fr*Math.min(1,fr*1.6)+w1,-(c.sst||0)*.3*fr+w2);
+}
 function motoMesh(c,night){
   const s=c.spec,l=s.l,a=c.a,x=c.x,z=c.y,ca=Math.cos(a),sa=Math.sin(a),dead=c.dead,col=hx(c.color).map(v=>dead?v*.2:v);
   const near=Math.hypot(x-P.x,z-P.y)<780,dtc=c._rt===undefined?0:Math.min(.1,Math.max(0,gameT-c._rt));
@@ -1971,7 +2070,7 @@ function motoMesh(c,night){
 function jetskiMesh(c,night){
   const s=c.spec,l=s.l,w=s.w,a=c.a,x=c.x,z=c.y,ca=Math.cos(a),sa=Math.sin(a),col=hx(c.color),dead=c.dead,white=dead?[.15,.15,.16]:[.95,.95,1];
   const lp=(lx,lz)=>[x+lx*ca-lz*sa,z+lx*sa+lz*ca];
-  YO=dead?-4:-.5+Math.sin(gameT*2.6+x*.03)*.7;let q;
+  const v0_=D.n;YO=dead?-4:-.5+Math.sin(gameT*2.6+x*.03)*.7;let q;
   q=lp(0,0);box(D,q[0],3,q[1],l*.44,2.6,w*.4,a,white,0);q=lp(l*.34,0);box(D,q[0],3.2,q[1],l*.14,2,w*.3,a,col,.3);
   q=lp(l*.02,0);box(D,q[0],6,q[1],l*.3,1.4,w*.34,a,dead?white:col,.2);
   q=lp(-l*.12,0);box(D,q[0],8,q[1],l*.2,1,w*.2,a,[.08,.08,.1],0);
@@ -1981,7 +2080,7 @@ function jetskiMesh(c,night){
     q=lp(-l*.1,0);box(D,q[0],12.5,q[1],2.2,3,2.6,a,[.95,.5,.1],0);q=lp(-l*.05,0);box(D,q[0],17.6,q[1],2.4,2.2,2.4,a,[.9,.9,.95],0);
     for(const sd of[-1,1]){limb(D,[q[0]-ca*0,14,q[1]-0],[x+ca*l*.12-sa*sd*w*.2,10.4,z+sa*l*.12+ca*sd*w*.2],.9,.8,[.95,.5,.1],[-sa,0,ca],0)}
   }
-  YO=0;
+  YO=0;seaTilt(c,v0_);
   if(!dead&&night>.05&&c.mode!=='idle'){const hq=lp(l*.45,0);glowAt(hq[0]+ca*6,7,hq[1]+sa*6,40,[1,.9,.6].map(v=>v*night*.8))}
   flatRot(T,x,z,l/2+3,w/2+3,a,.7,[0,0,0]);
 }
@@ -1992,6 +2091,7 @@ function carMesh(c,night){
   if(t==='boat'){boatMesh(c,night);return}
   if(t==='tank'){tankMesh(c,night);return}
   if(t==='heli'){heliMesh(c,night);return}
+  if(t==='plane'){planeMesh(c,night);return}
   carMesh0(c,night);
   if(t==='jeep'&&!c.dead){
     const ca=Math.cos(c.a),sa=Math.sin(c.a),q=[c.x-ca*4,c.y-sa*4];
