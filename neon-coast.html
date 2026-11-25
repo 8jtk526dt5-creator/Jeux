@@ -31,24 +31,35 @@ const rr=(x,y,w,h,r)=>{g.beginPath();if(g.roundRect)g.roundRect(x,y,w,h,r);else 
 const money=n=>'$'+Math.floor(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');
 
 /* ============================ MONDE ============================ */
-const TS=50,N=170,WS=N*TS,I0=6,I1=63;
+const TS=50,N=240,WS=N*TS,I0=6,I1=63,I0b=166,I1b=223;
+const inC1=(tx,ty)=>tx>=I0&&tx<=I1&&ty>=I0&&ty<=I1,inC2=(tx,ty)=>tx>=I0&&tx<=I1&&ty>=I0b&&ty<=I1b;
+const KY=[0,1,2,3,4,5,6,7,20,21,22,23,24,25,26,27];
 const TW=0,TSd=1,TR=2,TSW=3,TB=4,TG=5,TP=6,TC=7,TF=8,TGT=9,TFo=10,TCR=11,TCr=12,TAP=13;
 const R2=mulberry(777),hsh=(x,y)=>(((Math.imul(x,73856093)^Math.imul(y,19349663))>>>0)%1000)/1000;
 const pines=[],treeGrid=new Map();
-const inLandT=(tx,ty)=>ty>=64&&tx>=6&&tx<=160&&ty<=160;
+const inLandT=(tx,ty)=>ty>=64&&tx>=6&&tx<=160&&ty<=165;
 const BX0=8,BX1=21,BY0=48,BY1=61;
 const AIR={x0:100,y0:76,x1:138,y1:97};
 const inBaseT=(tx,ty)=>tx>=BX0&&tx<=BX1&&ty>=BY0&&ty<=BY1;
 const inBaseP=(x,y)=>inBaseT(Math.floor(x/TS),Math.floor(y/TS));
 const SHOPS=[],BASEB=[];
 const tiles=new Uint8Array(N*N),depth=new Uint8Array(N*N),tileB=new Int16Array(N*N).fill(-1);
-const isRL=t=>t>=I0&&t<=I1&&((t-I0)&7)<2;
+const isRL=t=>((t-I0)&7)<2&&((t>=I0&&t<=I1)||(t>=I0b&&t<=I1b));
 const IC=k=>(I0+8*k)*TS+50;               // centre d'intersection
-const nearIdx=v=>clamp(Math.round((v-IC(0))/400),0,7);
+const nearIdx=v=>clamp(Math.round((v-IC(0))/400),0,27);
 const buildings=[],palms=[],umbrellas=[],fountains=[],parkedSpots=[];
 const PAL=[[255,105,180],[40,220,205],[255,170,90],[150,110,255],[245,235,215],[90,170,255],[255,90,110],[120,230,160]];
+const PAL2=[[255,150,90],[255,205,120],[110,205,195],[240,120,140],[245,232,205],[90,150,205],[255,170,60],[180,225,140]];
 const NEON=['#ff3fa4','#2ff0ff','#ffd23f','#b86bff','#5dff9b'];
 const LOTS=[[1,2],[4,5],[5,0],[2,4],[3,6]];
+const LOTS2=[[1,2],[4,4],[2,0],[5,3]];
+function blockType2(kx,ky){
+  if(kx===6)return 'beach';
+  if(ky===6)return 'beachS';
+  if(LOTS2.some(l=>l[0]===kx&&l[1]===ky))return 'lot';
+  if((kx===1&&ky===4)||(kx===5&&ky===1)||(kx===2&&ky===5)||(kx===0&&ky===2))return 'park';
+  return 'bldg';
+}
 function blockType(kx,ky){
   if(kx<=1&&ky>=5)return 'base';
   if(kx===6)return 'beach';
@@ -62,20 +73,20 @@ function blockType(kx,ky){
     if(inBaseT(tx,ty)){
       const per=tx===BX0||tx===BX1||ty===BY0||ty===BY1,gate=per&&(ty===BY0||ty===BY1)&&(tx===14||tx===15);
       t=per?(gate?TGT:TF):TC;
-    }else if(tx>=I0&&tx<=I1&&ty>=I0&&ty<=I1){
+    }else if(inC1(tx,ty)||inC2(tx,ty)){
       if(isRL(tx)||isRL(ty))t=TR;
       else{
         const kx=(tx-8)>>3,ky=(ty-8)>>3,lx=(tx-I0)%8-2,ly=(ty-I0)%8-2;
-        const bt=blockType(kx,ky);
-        if(lx===0||lx===5||ly===0||ly===5)t=(bt==='beach'&&lx===5)?TSd:TSW;
-        else t=bt==='bldg'?TB:bt==='park'?TG:bt==='beach'?TSd:TR;
+        const bt=ty>=I0b?blockType2(kx,ky-20):blockType(kx,ky);
+        if(lx===0||lx===5||ly===0||ly===5)t=((bt==='beach'&&lx===5)||(bt==='beachS'&&ly===5))?TSd:TSW;
+        else t=bt==='bldg'?TB:bt==='park'?TG:(bt==='beach'||bt==='beachS')?TSd:TR;
       }
     }else{
-      const dx=Math.max(I0-tx,tx-I1,0),dy=Math.max(I0-ty,ty-I1,0),d=Math.max(dx,dy);
+      const dx=Math.max(I0-tx,tx-I1,0),dy=Math.max(I0-ty,ty-I1,0),dx2=Math.max(I0-tx,tx-I1,0),dy2=Math.max(I0b-ty,ty-I1b,0),d=Math.min(Math.max(dx,dy),Math.max(dx2,dy2));
       if(d<=2||(d===3&&R()<.55)){t=TSd;depth[i]=0}else{t=TW;depth[i]=Math.min(9,d+1)}
     }
-    if(inLandT(tx,ty)&&!(tx>=I0&&tx<=I1&&ty>=I0&&ty<=I1)){
-      let dIn=Math.min(tx-6,160-tx,160-ty);if(tx>63)dIn=Math.min(dIn,ty-64);
+    if(inLandT(tx,ty)&&!inC1(tx,ty)){
+      let dIn=Math.min(tx-6,160-tx,tx<=63?999:165-ty);if(tx>63)dIn=Math.min(dIn,ty-64);
       const hz=hsh(tx,ty);depth[i]=0;
       if((ty<=65&&tx<=65)||dIn<=1||(dIn===2&&hz<.5))t=TSd;
       else{
@@ -95,21 +106,21 @@ function blockType(kx,ky){
     tiles[i]=t;
   }
   // bâtiments
-  for(let ky=0;ky<7;ky++)for(let kx=0;kx<7;kx++){
-    const bt=blockType(kx,ky),tx0=8+kx*8,ty0=8+ky*8;
+  for(let cc=0;cc<2;cc++)for(let ky0=0;ky0<7;ky0++)for(let kx=0;kx<7;kx++){
+    const ky=ky0+cc*20,bt=cc?blockType2(kx,ky0):blockType(kx,ky),tx0=8+kx*8,ty0=8+ky*8,PL=cc?PAL2:PAL;
     if(bt==='bldg'){
-      const down=Math.abs(kx-3)<=1&&Math.abs(ky-3)<=1;
+      const down=Math.abs(kx-3)<=1&&Math.abs(ky0-3)<=1;
       const pat=(kx===0&&ky===0)?0:Math.floor(R()*4);
       let rects=pat===0?[[0,0,4,4]]:pat===1?[[0,0,2,4],[2,0,2,4]]:pat===2?[[0,0,4,2],[0,2,4,2]]:[[0,0,2,2],[2,0,2,2],[0,2,2,2],[2,2,2,2]];
       for(const q of rects){
-        const z=down?150+R()*310:70+R()*170;
-        const id=buildings.length,col=PAL[Math.floor(R()*PAL.length)];
-        const b={x:(tx0+1+q[0])*TS,y:(ty0+1+q[1])*TS,w:q[2]*TS,h:q[3]*TS,z:z,col:col,neon:NEON[Math.floor(R()*NEON.length)],ant:z>300&&R()<.7,hosp:kx===0&&ky===0,kx,ky};
+        const z=cc?(down?120+R()*200:55+R()*95):(down?150+R()*310:70+R()*170);
+        const id=buildings.length,col=PL[Math.floor(R()*PL.length)];
+        const b={x:(tx0+1+q[0])*TS,y:(ty0+1+q[1])*TS,w:q[2]*TS,h:q[3]*TS,z:z,col:col,neon:NEON[Math.floor(R()*NEON.length)],ant:z>300&&R()<.7,hosp:cc===0&&kx===0&&ky===0,kx,ky,dn:down,cc};
         b.cx=b.x+b.w/2;b.cy=b.y+b.h/2;buildings.push(b);
         for(let yy=0;yy<q[3];yy++)for(let xx=0;xx<q[2];xx++)tileB[(ty0+1+q[1]+yy)*N+tx0+1+q[0]+xx]=id;
       }
     }
-    if(bt==='bldg'||bt==='beach'||bt==='park'){
+    if(bt==='bldg'||bt==='beach'||bt==='beachS'||bt==='park'){
       // palmiers aux coins des trottoirs
       for(const [ax,ay] of [[0,0],[5,0],[0,5],[5,5]])palms.push({x:(tx0+ax+.5)*TS,y:(ty0+ay+.5)*TS,z:70+R()*30,r:R()*6});
     }
@@ -117,7 +128,7 @@ function blockType(kx,ky){
       for(let i=0;i<7;i++)palms.push({x:(tx0+1.2+R()*3.6)*TS,y:(ty0+1.2+R()*3.6)*TS,z:80+R()*40,r:R()*6});
       fountains.push({x:(tx0+3)*TS,y:(ty0+3)*TS});
     }
-    if(bt==='beach'){
+    if(bt==='beach'||bt==='beachS'){
       for(let i=0;i<9;i++)palms.push({x:(tx0+1+R()*4)*TS,y:(ty0+1+R()*4)*TS,z:80+R()*40,r:R()*6});
       for(let i=0;i<5;i++)umbrellas.push({x:(tx0+1.3+R()*3.4)*TS,y:(ty0+1.3+R()*3.4)*TS,c:NEON[i%5]});
     }
@@ -127,6 +138,7 @@ function blockType(kx,ky){
   }
   // jetees (prolongent deux avenues vers la mer)
   for(const row of[30,46])for(let rw=0;rw<2;rw++)for(let tx=64;tx<=78;tx++){const i=(row+rw)*N+tx;tiles[i]=TP}
+  for(const col of[30,46])for(let rw=0;rw<2;rw++)for(let ty=224;ty<=238;ty++)tiles[ty*N+col+rw]=TP;
   // batiments de la base militaire
   for(const q of[[10,50,4,3,95,'hangar'],[17,50,4,2,70,'caserne'],[10,57,3,3,105,'hangar'],[17,57,2,2,210,'tour']]){
     const id=buildings.length,b={x:q[0]*TS,y:q[1]*TS,w:q[2]*TS,h:q[3]*TS,z:q[4],H:q[4],col:[98,112,78],neon:'#ff3030',ant:q[5]==='tour',hosp:false,mil:true,kx:-1,ky:-1};
@@ -135,22 +147,24 @@ function blockType(kx,ky){
   }
   // boutiques : batiments dont la facade sud donne sur le trottoir
   {
+    for(const cc of[0,1]){
     const cand=[];
     for(const b of buildings){
-      if(b.mil||b.hosp||b.z>230||b.kx<0)continue;
-      if(Math.abs(b.kx-3)<=1&&Math.abs(b.ky-3)<=1)continue;
+      if(b.mil||b.hosp||b.z>(cc?160:230)||b.kx<0||(b.cc||0)!==cc)continue;
+      if(b.dn)continue;
       if(b.kx===1&&b.ky===2)continue;
       if(b.y+b.h!==(8+b.ky*8+5)*TS)continue;
       cand.push(b);
     }
     for(let i=cand.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[cand[i],cand[j]]=[cand[j],cand[i]]}
-    const types=['24','24','24','24','24','24','gun','gun','burger','burger','burger'],used=[];
+    const types=cc?['24','24','24','gun','burger','burger']:['24','24','24','24','24','24','gun','gun','burger','burger','burger'],used=[];let nn=0;
     for(const b of cand){
-      if(SHOPS.length>=types.length)break;
+      if(nn>=types.length)break;
       if(used.some(u=>Math.hypot(u.cx-b.cx,u.cy-b.cy)<500))continue;
       used.push(b);
-      const type=types[SHOPS.length];
+      const type=types[nn++];
       SHOPS.push({x:b.cx,y:b.y+b.h+25,type,b,cd:0,clerk:null,name:type==='24'?'SUPÉRETTE 24/7':type==='gun'?'ARMURERIE':'BURGER SHOT',lock:false});
+    }
     }
   }
   // ponton du lac
@@ -176,6 +190,7 @@ function blockType(kx,ky){
       pines.push(o);const key=ty*N+tx;let L=treeGrid.get(key);if(!L){L=[];treeGrid.set(key,L)}L.push(o);
     }
   }
+  for(let i=0;i<300;i++){const x=R()*3500,y=(I0b-8)*TS+R()*(N-I0b+8)*TS;const tx=Math.floor(x/TS),ty=Math.floor(y/TS);if(ty<N&&tiles[ty*N+tx]===TSd)palms.push({x,y,z:80+R()*40,r:R()*6})}
   // palmiers sur le sable ouest/sud
   for(let i=0;i<240;i++){
     const x=R()*5000,y=R()*5000;const tx=Math.floor(x/TS),ty=Math.floor(y/TS);
@@ -221,7 +236,7 @@ function hasLOS(x0,y0,x1,y1){
 const inInter=(x,y)=>isRL(Math.floor(x/TS))&&isRL(Math.floor(y/TS));
 const DX=[1,0,-1,0],DY=[0,1,0,-1];
 function randRoadPoint(){
-  const horiz=Math.random()<.5,k=ri(0,7),pos=rnd(I0*TS+120,(I1+1)*TS-120),band=(I0+8*k)*TS;
+  const horiz=Math.random()<.5,c2=Math.random()<.42,k=horiz&&c2?ri(20,27):ri(0,7),pos=(!horiz&&c2)?rnd(I0b*TS+120,(I1b+1)*TS-120):rnd(I0*TS+120,(I1+1)*TS-120),band=(I0+8*k)*TS;
   if(horiz){const e=Math.random()<.5;return{x:pos,y:band+(e?75:25),dir:e?0:2}}
   const s=Math.random()<.5;return{x:band+(s?25:75),y:pos,dir:s?1:3};
 }
@@ -231,6 +246,16 @@ function districtName(x,y){
   {const tx=Math.floor(x/TS),ty=Math.floor(y/TS);
    if(inLandT(tx,ty)&&ty>=67&&!oob(tx,ty)){const t=tiles[ty*N+tx];return t===TW?'LAC DE CRISTAL':t===TFo?'FORÊT ÉMERAUDE':t===TCr?'CHAMPS DORÉS':t===TCR?'ROUTE DU SUD':t===TP?'PONTON DU LAC':'PRAIRIES DU SUD'}}
   {const tx=Math.floor(x/TS),ty=Math.floor(y/TS);if(!oob(tx,ty)&&tiles[ty*N+tx]===TW)return 'OCÉAN';if(!oob(tx,ty)&&tiles[ty*N+tx]===TP)return 'LA MARINA'}
+  if(y>=I0b*TS-100){
+    const kx2=((x/TS-8)/8)|0,ky2=((y/TS-8-160)/8)|0;
+    if(x>(I1-6)*TS&&x<(I1+4)*TS)return 'PLAGE SOLEIL';
+    if(x<I0*TS||x>(I1+1)*TS||y>(I1b+1)*TS)return 'CÔTE SUD';
+    if(y>(I1b-6)*TS)return 'BAIE DU PORT';
+    if(Math.abs(kx2-3)<=1&&Math.abs(ky2-3)<=1)return 'CENTRE SOLEIL';
+    if(ky2<=1)return 'VIEUX PORT-SOLEIL';
+    if(kx2<=1)return 'COLLINES ROSES';
+    return 'PORT-SOLEIL';
+  }
   const kx=((x/TS-8)/8)|0,ky=((y/TS-8)/8)|0;
   if(x>(I1-6)*TS)return 'PLAGE DU COUCHANT';
   if(x<I0*TS||y<I0*TS||x>(I1+1)*TS||y>(I1+1)*TS)return 'CÔTE OUEST';
@@ -361,7 +386,7 @@ function addPickup(kind,x,y){pickups.push({kind,x,y,t:0,val:kind==='cash'?ri(1,4
 function spawnPickups(){
   let tries=0,cash=0,hp=0;
   while((cash<24||hp<7)&&tries++<4000){
-    const tx=ri(I0,I1),ty=ri(I0,I1);
+    const tx=ri(I0,I1),ty=Math.random()<.4?ri(I0b,I1b):ri(I0,I1);
     if(tiles[ty*N+tx]!==TSW)continue;
     const x=(tx+.5)*TS,y=(ty+.5)*TS;
     if(cash<24){addPickup('cash',x,y);cash++}else{addPickup('hp',x,y);hp++}
@@ -402,6 +427,8 @@ function setupWorld(){
   // bateaux amarres aux jetees
   for(const[tx,ty,a]of[[68,32.5,0],[72,32.5,0],[76,29.5,0],[70,29.5,0],[69,45.5,0],[74,48.5,0],[66.5,48.5,0]]){
     const b=mkCar('boat',tx*TS,ty*TS,a,'idle');b.vx=b.vy=0}
+  for(const[tx,ty]of[[33.6,228],[33.6,233],[43.8,229.5],[49.8,234.5],[29,231]]){const b=mkCar('boat',tx*TS,ty*TS,Math.PI/2,'idle');b.vx=b.vy=0}
+  for(const[tx,ty]of[[70,196],[71,205],[69.5,213]]){const b=mkCar('jetski',tx*TS,ty*TS,rnd(0,TAU),'idle');b.vx=b.vy=0}
   // base militaire
   for(const[tx,ty]of[[11.5,54.5],[19,54.5]]){const t=mkCar('tank',tx*TS,ty*TS,0,'idle');t.tur=0}
   for(const[tx,ty]of[[10.5,56.3],[12.8,56.3],[18,52.7],[20,52.7]])mkCar('jeep',tx*TS,ty*TS,0,'idle');
@@ -664,7 +691,7 @@ function spawnFauna(){
   for(let i=0;i<8;i++)add('jelly',false,3,7);
   for(let i=0;i<7;i++)add('duck',true,1,4);
   add('whale',false,8,9,{sp:-1,spT:rnd(4,10)});add('whale',false,8,9,{sp:-1,spT:rnd(4,10)});
-  for(let i=0;i<16;i++)fauna.push({type:'gull',cx:rnd(I0,I1)*TS,cy:rnd(I0,I1)*TS,r:rnd(220,520),th:rnd(0,TAU),w:(Math.random()<.5?-1:1)*rnd(.18,.42),alt:rnd(70,140),ph:rnd(0,6),x:0,y:0});
+  for(let i=0;i<20;i++)fauna.push({type:'gull',cx:rnd(I0,I1)*TS,cy:(i&1?rnd(I0b,I1b):rnd(I0,I1))*TS,r:rnd(220,520),th:rnd(0,TAU),w:(Math.random()<.5?-1:1)*rnd(.18,.42),alt:rnd(70,140),ph:rnd(0,6),x:0,y:0});
 }
 function swimMove(f,dt,sp,minD,maxD){
   f.turn+=(Math.random()-.5)*dt*4;f.turn=clamp(f.turn,-.7,.7);f.a+=f.turn*dt;
@@ -778,7 +805,7 @@ function aiUpdate(c,dt){
   {
     const ax=horiz?c.x:c.y,sg=horiz?dx:dy,ki=Math.round((ax-I0*TS-50)/(8*TS)),oth=Math.round(((horiz?c.y:c.x)-I0*TS-50)/(8*TS));
     for(const kk of[ki,ki+sg]){
-      if(kk<0||kk>7)continue;const ahead=(IC(kk)-ax)*sg-50;
+      if(kk<0||kk>27||(kk>7&&kk<20))continue;const ahead=(IC(kk)-ax)*sg-50;
       if(ahead<-8)continue;if(ahead>150)break;
       const st=horiz?lightState(true,kk,oth):lightState(false,oth,kk);
       if(st===2||(st===1&&ahead>32))want=Math.min(want,Math.max(0,(ahead-30)*2.2));
@@ -823,10 +850,10 @@ function copTarget(c){
   if(c.los)return[tx,ty];
   const ci=nearIdx(c.x),cj=nearIdx(c.y),pi=nearIdx(tx),pj=nearIdx(ty);
   const onH=Math.abs(c.y-IC(cj))<60,onV=Math.abs(c.x-IC(ci))<60,wx=pi-ci,wy=pj-cj;
-  const sx=Math.sign(wx),sy=Math.sign(wy);
-  if(onH&&onV){if(Math.abs(wx)>=Math.abs(wy)&&wx!==0)return[IC(clamp(ci+sx,0,7)),IC(cj)];if(wy!==0)return[IC(ci),IC(clamp(cj+sy,0,7))];return[tx,ty]}
+  const sx=Math.sign(wx),sy=Math.sign(wy),lo=cj>=14?20:0,hi=cj>=14?27:7;
+  if(onH&&onV){if(Math.abs(wx)>=Math.abs(wy)&&wx!==0)return[IC(clamp(ci+sx,0,7)),IC(cj)];if(wy!==0)return[IC(ci),IC(clamp(cj+sy,lo,hi))];return[tx,ty]}
   if(onH){if(wx!==0)return[IC(clamp(ci+sx,0,7)),IC(cj)];return[IC(ci),IC(cj)]}
-  if(onV){if(wy!==0)return[IC(ci),IC(clamp(cj+sy,0,7))];return[IC(ci),IC(cj)]}
+  if(onV){if(wy!==0)return[IC(ci),IC(clamp(cj+sy,lo,hi))];return[IC(ci),IC(cj)]}
   return[IC(ci),IC(cj)];
 }
 function copUpdate(c,dt){
@@ -911,15 +938,15 @@ function crimeSoft(){if(P.wanted===0&&Math.random()<.35)crime(1)}
 function toast(t,ms){toasts.push({t,life:(ms||2400)/1000,max:(ms||2400)/1000})}
 
 /* ============================ MISSIONS ============================ */
-const GIV=[{k:[2,2],type:0},{k:[5,1],type:1},{k:[1,5],type:2},{k:[6,5],type:0},{k:[3,6],type:1},{k:[5,4],type:2},{k:[3,3],type:0},{k:[0,3],type:2}];
+const GIV=[{k:[2,2],type:0},{k:[5,1],type:1},{k:[1,5],type:2},{k:[6,5],type:0},{k:[3,6],type:1},{k:[5,4],type:2},{k:[3,3],type:0},{k:[0,3],type:2},{k:[2,22],type:0},{k:[5,21],type:1},{k:[1,25],type:2},{k:[4,26],type:0},{k:[3,24],type:1}];
 GIV.forEach(v=>{v.x=IC(v.k[0]);v.y=IC(v.k[1]);v.cd=0});
 const MNAMES=['LIVRAISON EXPRESS','VOITURE SUR COMMANDE','RÈGLEMENT DE COMPTES'];
 function randIC(minD,maxD){
   for(let i=0;i<80;i++){
-    const a=ri(0,7),b=ri(0,7),x=IC(a),y=IC(b),d=Math.hypot(x-P.x,y-P.y);if(inBaseP(x,y))continue;
+    const a=ri(0,7),b=Math.random()<.4?ri(20,27):ri(0,7),x=IC(a),y=IC(b),d=Math.hypot(x-P.x,y-P.y);if(inBaseP(x,y))continue;
     if(d>=minD&&d<=maxD)return{x,y};
   }
-  return{x:IC(ri(0,7)),y:IC(ri(0,7))};
+  return{x:IC(ri(0,7)),y:IC(pick(KY))};
 }
 function startMission(gv){
   const t=gv.type;
@@ -1151,8 +1178,8 @@ function genProps(){
     if(long&&hw!==hd){const t=hw;hw=hd;hd=t}
     addProp(K,cx,cy,hw,hd,h);
   };
-  for(let ty=I0;ty<=I1;ty++)for(let tx=I0;tx<=I1;tx++){
-    if(tiles[ty*N+tx]!==TSd)continue;const h1=hsh(tx*3+1,ty*5+2);if(h1>.22)continue;mk(tx,ty,h1,hsh(tx+50,ty+70));
+  for(let ty=I0;ty<=I1b;ty++)for(let tx=I0;tx<=I1;tx++){
+    if(ty>I1&&ty<I0b)continue;if(tiles[ty*N+tx]!==TSd)continue;const h1=hsh(tx*3+1,ty*5+2);if(h1>.22)continue;mk(tx,ty,h1,hsh(tx+50,ty+70));
   }
   for(let ty=BY0;ty<=BY1;ty++)for(let tx=BX0;tx<=BX1;tx++){
     const t=tiles[ty*N+tx];if(t===TB||t===TF||t===TGT||t===TW)continue;
@@ -1729,7 +1756,7 @@ function airportStatic(b){
   }
 }
 function buildStatic(){
-  const b=B(850000);
+  const b=B(900000);
   const road=[.2,.19,.29],sw1=[.55,.5,.66],sw2=[.5,.46,.62],grass1=[.18,.62,.42],grass2=[.16,.57,.38],sand=[.93,.83,.62],dark=[.16,.14,.24];
   quad4(b,[-7000,-100,-7000],[WS+7000,-100,-7000],[WS+7000,-100,WS+7000],[-7000,-100,WS+7000],0,1,0,[.01,.04,.1],0,-1,-1,-1,-1);
   const mixc=(a,c,t)=>a.map((v,i)=>v+(c[i]-v)*t);
@@ -1750,9 +1777,17 @@ function buildStatic(){
     else if(mm_>1&&mm_<5&&hv<.08)cyl(b,px+10+hv*300,sbH(mm_),pz+20,2.2,6+hv*90,hv<.04?[1,.45,.35]:[.9,.35,.75],.1,5);
     else if(mm_>2.5&&hv>.93)box(b,px+25,sbH(mm_)+3,pz+25,6+hv*20,3,5,0.3,[.3,.32,.36],0);
   };
+  const DEEP=new Uint8Array(N*N);
+  for(let by=0;by<N;by+=4)for(let bx=0;bx<N;bx+=4){
+    let ok=true;
+    for(let yy=by-1;yy<=by+4&&ok;yy++)for(let xx=bx-1;xx<=bx+4;xx++){if(!oob(xx,yy)&&(tiles[yy*N+xx]!==TW||depth[yy*N+xx]<9)){ok=false;break}}
+    if(!ok)continue;
+    quad4(b,[bx*TS,sbH(9),by*TS],[(bx+4)*TS,sbH(9),by*TS],[(bx+4)*TS,sbH(9),(by+4)*TS],[bx*TS,sbH(9),(by+4)*TS],0,1,0,sbCol(9),0,-1,-1,-1,-1);
+    for(let yy=by;yy<by+4;yy++)for(let xx=bx;xx<bx+4;xx++)DEEP[yy*N+xx]=1;
+  }
   for(let ty=0;ty<N;ty++)for(let tx=0;tx<N;tx++){
     const i=ty*N+tx,t=tiles[i],px=tx*TS,pz=ty*TS;
-    if(t===TW||t===TP)seabed(tx,ty,px,pz);
+    if((t===TW||t===TP)&&!DEEP[i])seabed(tx,ty,px,pz);
     if(t===TW){
     }else if(t===TSd){flat(b,px,pz,TS,TS,.5,((tx*7+ty*3)&3)===0?[.9,.8,.58]:sand)}
     else if(t===TR){
@@ -1833,7 +1868,7 @@ function buildStatic(){
   box(b,19*TS,.6,60*TS,36,.4,36,0,[.22,.24,.27],0);box(b,19*TS-10,1.1,60*TS,2.6,.3,15,0,[1,.85,.2],.5);box(b,19*TS+10,1.1,60*TS,2.6,.3,15,0,[1,.85,.2],.5);box(b,19*TS,1.1,60*TS,10,.3,2.6,0,[1,.85,.2],.5);
   // bâtiments
   for(const bd of buildings){
-    const kx=Math.floor((bd.x/TS-8)/8),ky=Math.floor((bd.y/TS-8)/8),down=Math.abs(kx-3)<=1&&Math.abs(ky-3)<=1;
+    const down=!!bd.dn;
     const H=bd.mil?bd.z:(down?bd.z*1.8:bd.z*1.15);bd.H=H;
     const col=[bd.col[0]/255,bd.col[1]/255,bd.col[2]/255],neon=hx(bd.neon),roofc=[col[0]*.7+.12,col[1]*.7+.12,col[2]*.7+.12];
     const x0=bd.x,z0=bd.y,x1=bd.x+bd.w,z1=bd.y+bd.h,u0=Math.floor(R()*8)/8;
@@ -1946,17 +1981,20 @@ function buildStatic(){
     cyl(b,f.x,0,f.y,34,6,[.8,.92,.96],0,16);cyl(b,f.x,6,f.y,28,.4,[.2,.8,.85],.35,16);cyl(b,f.x,6,f.y,3,26,[.9,.98,1],.4,8);
   }
   // lampadaires
-  for(let a=0;a<8;a++)for(let c=0;c<8;c++)for(const[sx,sy]of[[-1,-1],[1,-1],[-1,1],[1,1]]){
+  for(let a=0;a<8;a++)for(const c of KY)for(const[sx,sy]of[[-1,-1],[1,-1],[-1,1],[1,1]]){
     const x=IC(a)+sx*62,z=IC(c)+sy*62,col=((a+c+(sx>0?1:0))&1)?[1,.25,.65]:[.2,.95,1];
     box(b,x,26,z,1.2,26,1.2,0,[.3,.3,.38],0);box(b,x-sx*5,52,z-sy*5,6,1,1,0,[.3,.3,.38],0);box(b,x-sx*9,51,z-sy*5,4,1.4,2.6,0,col,1);
     LAMPS.push([x-sx*9,49,z-sy*5,col]);
   }
   {
-    const wb=B(150000),wc=m=>m<.5?[.22,.78,.74]:m<1.8?mixc([.22,.78,.74],[.05,.42,.64],(m-.5)/1.3):m<4.5?mixc([.05,.42,.64],[.02,.16,.4],(m-1.8)/2.7):mixc([.02,.16,.4],[.01,.06,.2],clamp((m-4.5)/4,0,1));
+    const wb=B(200000),wc=m=>m<.5?[.22,.78,.74]:m<1.8?mixc([.22,.78,.74],[.05,.42,.64],(m-.5)/1.3):m<4.5?mixc([.05,.42,.64],[.02,.16,.4],(m-1.8)/2.7):mixc([.02,.16,.4],[.01,.06,.2],clamp((m-4.5)/4,0,1));
     const big=7000,dc=[.01,.06,.2];
     for(const q of[[-big,-big,WS+big,0],[-big,WS,WS+big,WS+big],[-big,0,0,WS],[WS,0,WS+big,WS]])quad4(wb,[q[0],-1.75,q[1]],[q[2],-1.75,q[1]],[q[2],-1.75,q[3]],[q[0],-1.75,q[3]],0,1,0,dc,0,-2,-2,-2,-2);
     const v=(x,z,m)=>pv(wb,x,-1.7,z,0,1,0,wc(m),-2,-2,0);
-    for(let ty=0;ty<N;ty++)for(let tx=0;tx<N;tx++){const t=tiles[ty*N+tx];if(t!==TW&&t!==TP)continue;
+    for(let by=0;by<N;by+=4)for(let bx=0;bx<N;bx+=4){
+      if(!DEEP[by*N+bx])continue;
+      const x0=bx*TS,z0=by*TS,x1=x0+4*TS,z1=z0+4*TS;v(x0,z0,9);v(x1,z0,9);v(x1,z1,9);v(x0,z0,9);v(x1,z1,9);v(x0,z1,9)}
+    for(let ty=0;ty<N;ty++)for(let tx=0;tx<N;tx++){const t=tiles[ty*N+tx];if(t!==TW&&t!==TP)continue;if(DEEP[ty*N+tx])continue;
       const px=tx*TS,pz=ty*TS,m00=cdp(tx,ty),m10=cdp(tx+1,ty),m11=cdp(tx+1,ty+1),m01=cdp(tx,ty+1);
       v(px,pz,m00);v(px+TS,pz,m10);v(px+TS,pz+TS,m11);v(px,pz,m00);v(px+TS,pz+TS,m11);v(px,pz+TS,m01)}
     WBn=wb.n;WBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,WBuf);gl.bufferData(gl.ARRAY_BUFFER,wb.a.subarray(0,wb.n*12),gl.STATIC_DRAW)}
@@ -2655,7 +2693,7 @@ function buildDyn(ex,ez,night){
     else if(p.add){const col=p.c==='#ffd27a'?[1,.82,.45]:p.c==='#ff7a2a'||p.c==='#ff6a2a'?[1,.45,.15]:[1,.8,.25];glowAt(p.x,10+(1-k)*14,p.y,Math.max(4,p.r*5),col.map(q=>q*(.35+k*.8)))}
   }
   // feux tricolores
-  for(let a=0;a<8;a++)for(let b=0;b<8;b++){
+  for(let a=0;a<8;a++)for(const b of KY){
     const x=IC(a),z=IC(b);if((x-ex)*(x-ex)+(z-ez)*(z-ez)>8e5)continue;
     const sH=lightState(true,a,b),sV=lightState(false,a,b),cc=[[.1,1,.3],[1,.8,.1],[1,.1,.1]];
     for(const[sx,sy]of[[-1,-1],[1,-1],[-1,1],[1,1]]){
