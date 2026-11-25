@@ -125,7 +125,7 @@ function buildView(ex,ey,ez,cx,cy,cz){
   // Stockage colonne-majeure : m[col*4+row]
   const m=m4();
   m[0]=rx;  m[4]=ry;  m[8]=rz;   m[12]=-(rx*ex+ry*ey+rz*ez);
-  m[1]=ox;  m[5]=oy;  m[9]=oz;   m[13]=-(ox*ex+oy*ey+oz*ez);
+  m[1]=-ox; m[5]=-oy; m[9]=-oz;  m[13]= (ox*ex+oy*ey+oz*ez);
   m[2]=fx;  m[6]=fy;  m[10]=fz;  m[14]=-(fx*ex+fy*ey+fz*ez);
   m[15]=1;
   return m;
@@ -134,7 +134,7 @@ function buildView(ex,ey,ez,cx,cy,cz){
 // Projection : 3D -> écran 2D
 function project([x,y,z]){
   if(z<=0.1) return null;
-  return [CX + x/z*FOCAL, CY - y/z*FOCAL, z];
+  return [CX + x/z*FOCAL, CY + y/z*FOCAL, z];
 }
 
 // ── Rendu : polygone plein (face 3D) ─────────────────
