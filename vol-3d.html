@@ -10,40 +10,52 @@
   canvas{display:block}
   #ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
   #hud{position:absolute;top:12px;left:0;width:100%;display:flex;justify-content:space-between;padding:0 14px}
-  .panel{background:rgba(0,0,0,.45);border-radius:10px;padding:7px 13px;color:#fff;font-size:11px;line-height:1.6}
+  .panel{background:rgba(0,0,0,.5);border-radius:10px;padding:7px 13px;color:#fff;font-size:11px;line-height:1.6;border:1px solid rgba(255,255,255,.08)}
   .pv{font-size:17px;font-weight:700}
   #compass{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px}
   #carr{font-size:22px;color:#ffd24f;filter:drop-shadow(0 0 4px #fa0);transition:transform .1s}
-  #cdist{font-size:11px;background:rgba(0,0,0,.45);color:#fff;padding:1px 8px;border-radius:20px}
-  #lhud{display:none;position:absolute;top:88px;right:12px;background:rgba(0,0,0,.5);border-radius:10px;padding:9px 13px;color:#fff;font-size:11px;min-width:175px;line-height:1.9}
+  #cdist{font-size:11px;background:rgba(0,0,0,.5);color:#fff;padding:1px 8px;border-radius:20px}
+  #cityName{position:absolute;top:68px;left:50%;transform:translateX(-50%);font-size:12px;color:#ffd24f;background:rgba(0,0,0,.45);padding:2px 10px;border-radius:12px;display:none}
+  #lhud{display:none;position:absolute;top:88px;right:12px;background:rgba(0,0,0,.55);border-radius:10px;padding:9px 13px;color:#fff;font-size:11px;min-width:175px;line-height:1.9;border:1px solid rgba(255,255,255,.08)}
   #lhud .lt{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:2px}
   #lhud .row{display:flex;justify-content:space-between;gap:8px}
   .ok{color:#7effa0;font-weight:700}.bad{color:#ff7878;font-weight:700}
+  #stabHud{position:absolute;bottom:95px;left:50%;transform:translateX(-50%);background:rgba(0,120,255,.25);border:1px solid rgba(100,180,255,.4);border-radius:10px;padding:4px 14px;color:#adf;font-size:11px;display:none}
   #banner{display:none;position:absolute;top:36%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:22px;font-weight:700;text-align:center;text-shadow:0 2px 10px rgba(255,140,40,.9)}
-  #result{display:none;position:absolute;inset:0;background:rgba(0,0,0,.8);flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px;pointer-events:all}
+  #result{display:none;position:absolute;inset:0;background:rgba(0,0,0,.82);flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px;pointer-events:all}
   #result h1{font-size:34px;margin-bottom:10px}
   #rmsg{font-size:15px;max-width:340px;line-height:1.5;margin-bottom:5px}
   #rsub{font-size:12px;opacity:.6;margin-bottom:20px}
   #rbtn{padding:12px 26px;font-size:15px;font-weight:700;background:linear-gradient(135deg,#ff9d44,#ffd24f);border:none;border-radius:50px;cursor:pointer;color:#1a0a00}
-  #hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);color:rgba(255,220,160,.65);font-size:11px;text-align:center}
+  #hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);color:rgba(255,220,160,.65);font-size:10px;text-align:center;line-height:1.7}
   /* Boutons tactiles */
   #tctl{display:none;position:absolute;inset:0;pointer-events:none}
-  .tb{position:absolute;pointer-events:all;width:72px;height:72px;border-radius:50%;background:rgba(255,180,80,.15);border:1.5px solid rgba(255,180,80,.35);display:flex;align-items:center;justify-content:center;font-size:22px;color:rgba(255,220,160,.85);user-select:none;-webkit-user-select:none}
-  .tb.on{background:rgba(255,180,80,.4);border-color:#ffb850}
-  #tU{left:16px;bottom:106px}#tD{left:16px;bottom:24px}
-  #tL{right:106px;bottom:24px}#tR{right:24px;bottom:24px}
-  #muteBtn{position:absolute;top:12px;left:50%;margin-left:55px;pointer-events:all;background:rgba(0,0,0,.4);border:1px solid rgba(255,200,100,.2);border-radius:50%;width:32px;height:32px;cursor:pointer;color:#ffd24f;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .tb{position:absolute;pointer-events:all;width:68px;height:68px;border-radius:50%;background:rgba(255,180,80,.13);border:1.5px solid rgba(255,180,80,.32);display:flex;align-items:center;justify-content:center;font-size:20px;color:rgba(255,220,160,.82);user-select:none;-webkit-user-select:none}
+  .tb.on{background:rgba(255,180,80,.38);border-color:#ffb850}
+  #tU{left:16px;bottom:106px}#tD{left:16px;bottom:28px}
+  #tL{right:106px;bottom:28px}#tR{right:28px;bottom:28px}
+  #tStab{left:50%;transform:translateX(-50%);bottom:28px;width:80px;height:40px;border-radius:20px;font-size:13px;font-weight:700;color:#adf;border-color:rgba(100,180,255,.5);background:rgba(0,100,255,.15)}
+  #tStab.on{background:rgba(0,120,255,.4);border-color:#6af}
+  #muteBtn{position:absolute;top:12px;left:50%;margin-left:58px;pointer-events:all;background:rgba(0,0,0,.4);border:1px solid rgba(255,200,100,.2);border-radius:50%;width:32px;height:32px;cursor:pointer;color:#ffd24f;font-size:14px;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="ui">
   <div id="hud">
-    <div class="panel"><div style="opacity:.6;font-size:10px;text-transform:uppercase;letter-spacing:.06em">Altitude</div><div class="pv" id="altV">0 m</div></div>
-    <div class="panel" style="text-align:right"><div style="opacity:.6;font-size:10px;text-transform:uppercase;letter-spacing:.06em">Vitesse</div><div class="pv" id="spdV">0 km/h</div></div>
+    <div class="panel">
+      <div style="opacity:.6;font-size:10px;text-transform:uppercase;letter-spacing:.06em">Altitude</div>
+      <div class="pv" id="altV">0 m</div>
+    </div>
+    <div class="panel" style="text-align:right">
+      <div style="opacity:.6;font-size:10px;text-transform:uppercase;letter-spacing:.06em">Vitesse</div>
+      <div class="pv" id="spdV">0 km/h</div>
+    </div>
   </div>
   <button id="muteBtn">🔊</button>
   <div id="compass"><div id="carr">➤</div><div id="cdist">— m</div></div>
+  <div id="cityName"></div>
+  <div id="stabHud">✈ Stabilisateur actif</div>
   <div id="lhud">
     <div class="lt">✈ Approche finale</div>
     <div class="row"><span>Taux descente</span><span id="lvs">—</span></div>
@@ -57,292 +69,271 @@
     <button id="rbtn">Redécoller ✈</button>
   </div>
   <div id="tctl">
-    <div class="tb" id="tU">▲</div><div class="tb" id="tD">▼</div>
-    <div class="tb" id="tL">◀</div><div class="tb" id="tR">▶</div>
+    <div class="tb" id="tU">▲</div>
+    <div class="tb" id="tD">▼</div>
+    <div class="tb" id="tL">◀</div>
+    <div class="tb" id="tR">▶</div>
+    <div class="tb" id="tStab">STAB</div>
   </div>
-  <div id="hint">↑/↓ cabrer · piquer &nbsp;•&nbsp; ←/→ virer &nbsp;•&nbsp; Shift accélérer</div>
+  <div id="hint">↑/↓ cabrer·piquer &nbsp;•&nbsp; ←/→ virer &nbsp;•&nbsp; Shift accélérer &nbsp;•&nbsp; S stabiliser</div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════
-// MOTEUR 3D — CANVAS 2D + PROJECTION PERSPECTIVE MANUELLE
-// Compatible partout : Safari iOS, navigateur in-app, etc.
+// MOTEUR 3D — CANVAS 2D + PROJECTION PERSPECTIVE
 // ═══════════════════════════════════════════════════════
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-let W, H, CX, CY, FOCAL;
-
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W,H,CX,CY,FOCAL;
 function resize(){
-  W = canvas.width  = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-  CX = W/2; CY = H/2;
-  FOCAL = Math.min(W, H) * 0.9;
+  W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;
+  CX=W/2; CY=H/2; FOCAL=Math.min(W,H)*0.9;
 }
-resize();
-window.addEventListener('resize', resize);
+resize(); window.addEventListener('resize',resize);
 
-// ── Matrices 4×4 (Float32Array) ──────────────────────
-function m4(){ return new Float32Array(16); }
-function identity(){
-  const m=m4(); m[0]=m[5]=m[10]=m[15]=1; return m;
-}
+// ── Matrices 4×4 col-major ────────────────────────────
+function m4(){return new Float32Array(16);}
+function identity(){const m=m4();m[0]=m[5]=m[10]=m[15]=1;return m;}
 function mulM(a,b){
   const o=m4();
-  for(let c=0;c<4;c++) for(let r=0;r<4;r++){
-    let s=0; for(let k=0;k<4;k++) s+=a[r+k*4]*b[k+c*4]; o[r+c*4]=s;
-  } return o;
+  for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[r+k*4]*b[k+c*4];o[r+c*4]=s;}
+  return o;
 }
-function translate(tx,ty,tz){
-  const m=identity(); m[12]=tx;m[13]=ty;m[14]=tz; return m;
-}
-function scaleM(sx,sy,sz){
-  const m=identity(); m[0]=sx;m[5]=sy;m[10]=sz; return m;
-}
-function rotX(a){ const m=identity(),c=Math.cos(a),s=Math.sin(a); m[5]=c;m[6]=s;m[9]=-s;m[10]=c; return m; }
-function rotY(a){ const m=identity(),c=Math.cos(a),s=Math.sin(a); m[0]=c;m[2]=-s;m[8]=s;m[10]=c; return m; }
-function rotZ(a){ const m=identity(),c=Math.cos(a),s=Math.sin(a); m[0]=c;m[1]=s;m[4]=-s;m[5]=c; return m; }
-
+function translate(tx,ty,tz){const m=identity();m[12]=tx;m[13]=ty;m[14]=tz;return m;}
+function scaleM(sx,sy,sz){const m=identity();m[0]=sx;m[5]=sy;m[10]=sz;return m;}
+function rotX(a){const m=identity(),c=Math.cos(a),s=Math.sin(a);m[5]=c;m[6]=s;m[9]=-s;m[10]=c;return m;}
+function rotY(a){const m=identity(),c=Math.cos(a),s=Math.sin(a);m[0]=c;m[2]=-s;m[8]=s;m[10]=c;return m;}
+function rotZ(a){const m=identity(),c=Math.cos(a),s=Math.sin(a);m[0]=c;m[1]=s;m[4]=-s;m[5]=c;return m;}
 function applyM(m,[x,y,z]){
   const w=m[3]*x+m[7]*y+m[11]*z+m[15];
-  return [
-    (m[0]*x+m[4]*y+m[8]*z+m[12])/w,
-    (m[1]*x+m[5]*y+m[9]*z+m[13])/w,
-    (m[2]*x+m[6]*y+m[10]*z+m[14])/w
-  ];
+  return[(m[0]*x+m[4]*y+m[8]*z+m[12])/w,(m[1]*x+m[5]*y+m[9]*z+m[13])/w,(m[2]*x+m[6]*y+m[10]*z+m[14])/w];
 }
 
-// Vue : caméra -> espace caméra
-// Convention simple : Z positif = devant la caméra
+// LookAt : Z+ = devant caméra
 function buildView(ex,ey,ez,cx,cy,cz){
-  // forward = normalize(target - eye)
-  let fx=cx-ex, fy=cy-ey, fz=cz-ez;
-  const fl=Math.sqrt(fx*fx+fy*fy+fz*fz)||1; fx/=fl; fy/=fl; fz/=fl;
-  // right = cross(worldUp=(0,1,0), forward) → puis normaliser
-  // cross((0,1,0), f) = (1*fz-0*fy, 0*fx-0*fz, 0*fy-1*fx) = (fz, 0, -fx)
-  let rx=fz, ry=0, rz=-fx;
-  const rl=Math.sqrt(rx*rx+rz*rz)||1; rx/=rl; rz/=rl;
-  // up = cross(forward, right)  [pour garder le trièdre direct]
-  const ux=fy*rz-fz*ry, uy=fz*rx-fx*rz, uz=fx*ry-fy*rx;
-  // Matrice de vue : chaque ligne = un axe de la base caméra
-  // m[col*4+row] stockage colonne-majeure
-  // row0=right, row1=up, row2=forward  → Z positif devant
+  let fx=cx-ex,fy=cy-ey,fz=cz-ez;
+  const fl=Math.sqrt(fx*fx+fy*fy+fz*fz)||1;fx/=fl;fy/=fl;fz/=fl;
+  let rx=fz,ry=0,rz=-fx;
+  const rl=Math.sqrt(rx*rx+rz*rz)||1;rx/=rl;rz/=rl;
+  const ux=fy*rz-fz*ry,uy=fz*rx-fx*rz,uz=fx*ry-fy*rx;
   const m=m4();
-  m[0]=rx;  m[4]=ry;  m[8]=rz;  m[12]=-(rx*ex+ry*ey+rz*ez);
-  m[1]=ux;  m[5]=uy;  m[9]=uz;  m[13]=-(ux*ex+uy*ey+uz*ez);
-  m[2]=fx;  m[6]=fy;  m[10]=fz; m[14]=-(fx*ex+fy*ey+fz*ez);
-  m[15]=1;
-  return m;
+  m[0]=rx;m[4]=ry;m[8]=rz;m[12]=-(rx*ex+ry*ey+rz*ez);
+  m[1]=ux;m[5]=uy;m[9]=uz;m[13]=-(ux*ex+uy*ey+uz*ez);
+  m[2]=fx;m[6]=fy;m[10]=fz;m[14]=-(fx*ex+fy*ey+fz*ez);
+  m[15]=1;return m;
 }
-
-// Projection perspective : espace caméra → écran
-// Z positif = devant. Y positif = haut monde = haut écran (donc CY - ...)
 function project([x,y,z]){
-  if(z<=0.1) return null;
-  return [CX + x/z*FOCAL, CY - y/z*FOCAL, z];
+  if(z<=0.1)return null;
+  return[CX+x/z*FOCAL,CY-y/z*FOCAL,z];
 }
 
-// ── Rendu : polygone plein (face 3D) ─────────────────
-function drawFace(pts2d, fillColor, strokeColor){
-  if(pts2d.some(p=>!p)) return;
-  ctx.beginPath();
-  ctx.moveTo(pts2d[0][0], pts2d[0][1]);
-  for(let i=1;i<pts2d.length;i++) ctx.lineTo(pts2d[i][0], pts2d[i][1]);
+// ── Rendu ─────────────────────────────────────────────
+function drawFace(pts,fill,stroke){
+  if(pts.some(p=>!p))return;
+  ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);
   ctx.closePath();
-  if(fillColor){ ctx.fillStyle=fillColor; ctx.fill(); }
-  if(strokeColor){ ctx.strokeStyle=strokeColor; ctx.lineWidth=0.8; ctx.stroke(); }
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=0.7;ctx.stroke();}
 }
 
-// Éclairage simple : dot produit avec direction solaire
-const SUN = (()=>{ const v=[0.6,0.7,0.4]; const l=Math.sqrt(v[0]**2+v[1]**2+v[2]**2); return v.map(x=>x/l); })();
-
-function lightColor(nx,ny,nz, baseH,baseS,baseL){
-  const dot=Math.max(0, nx*SUN[0]+ny*SUN[1]+nz*SUN[2]);
-  const l=Math.round(baseL*0.45 + baseL*0.55*dot);
-  return `hsl(${baseH},${baseS}%,${l}%)`;
+const SUN=(()=>{const v=[0.55,0.75,0.35];const l=Math.sqrt(v[0]**2+v[1]**2+v[2]**2);return v.map(x=>x/l);})();
+function lightColor(nx,ny,nz,H,S,L){
+  const d=Math.max(0,nx*SUN[0]+ny*SUN[1]+nz*SUN[2]);
+  return`hsl(${H},${S}%,${Math.round(L*.42+L*.58*d)}%)`;
 }
 
-// Transforme les sommets 3D locaux par la matrice modèle+vue puis projette
-let VIEW = identity();
-function transformPts(pts, modelM){
-  return pts.map(p => {
-    const w = applyM(modelM, p);
-    const v = applyM(VIEW, w);
-    return project(v);
-  });
-}
+let VIEW=identity();
 
-// ── Primitives 3D ────────────────────────────────────
-// Boîte : dessine les faces visibles
-function drawBox(modelM, w,h,d, hue,sat,baseLt, alpha=1){
+function drawBox(modelM,w,h,d,hue,sat,lt,alpha=1){
   const hw=w/2,hh=h/2,hd=d/2;
-  const v=[
-    [-hw,-hh,-hd],[ hw,-hh,-hd],[ hw, hh,-hd],[-hw, hh,-hd],
-    [-hw,-hh, hd],[ hw,-hh, hd],[ hw, hh, hd],[-hw, hh, hd]
-  ];
-  const faces=[
-    {i:[0,1,2,3],n:[0,0,-1]},{i:[5,4,7,6],n:[0,0,1]},
-    {i:[1,5,6,2],n:[1,0,0]},{i:[4,0,3,7],n:[-1,0,0]},
-    {i:[3,2,6,7],n:[0,1,0]},{i:[4,5,1,0],n:[0,-1,0]}
-  ];
-  // Projeter tous les sommets
-  const vw = v.map(p=>applyM(modelM,p));
-  const vv = vw.map(p=>applyM(VIEW,p));
-  const vs = vv.map(p=>project(p));
-
-  // Trier les faces par profondeur (painter's algo simple)
+  const v=[[-hw,-hh,-hd],[hw,-hh,-hd],[hw,hh,-hd],[-hw,hh,-hd],
+           [-hw,-hh,hd],[hw,-hh,hd],[hw,hh,hd],[-hw,hh,hd]];
+  const faces=[{i:[0,1,2,3],n:[0,0,-1]},{i:[5,4,7,6],n:[0,0,1]},
+               {i:[1,5,6,2],n:[1,0,0]},{i:[4,0,3,7],n:[-1,0,0]},
+               {i:[3,2,6,7],n:[0,1,0]},{i:[4,5,1,0],n:[0,-1,0]}];
+  const vw=v.map(p=>applyM(modelM,p));
+  const vv=vw.map(p=>applyM(VIEW,p));
+  const vs=vv.map(p=>project(p));
   const toRender=[];
   faces.forEach(f=>{
     const pts=f.i.map(i=>vs[i]);
-    if(pts.some(p=>!p)) return;
-    // Back-face culling en espace vue
-    const a=vv[f.i[0]], b=vv[f.i[1]], c=vv[f.i[2]];
-    const ax=b[0]-a[0],ay=b[1]-a[1],az=b[2]-a[2];
-    const bx=c[0]-a[0],by=c[1]-a[1],bz=c[2]-a[2];
-    const nz=ax*by-ay*bx;
-    if(nz>=0) return; // face cachée
+    if(pts.some(p=>!p))return;
+    const a=vv[f.i[0]],b=vv[f.i[1]],c=vv[f.i[2]];
+    const nz=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+    if(nz>=0)return;
     const depth=(pts[0][2]+pts[1][2]+pts[2][2]+pts[3][2])/4;
-    toRender.push({pts, depth, n:f.n});
+    toRender.push({pts,depth,n:f.n});
   });
   toRender.sort((a,b)=>b.depth-a.depth);
   toRender.forEach(f=>{
-    const col=lightColor(f.n[0],f.n[1],f.n[2], hue,sat,baseLt);
     ctx.globalAlpha=alpha;
-    drawFace(f.pts, col, `hsl(${hue},${sat}%,${Math.round(baseLt*0.6)}%)`);
+    drawFace(f.pts,lightColor(f.n[0],f.n[1],f.n[2],hue,sat,lt),
+      `hsl(${hue},${sat}%,${Math.round(lt*.55)}%)`);
     ctx.globalAlpha=1;
   });
 }
 
-// Cylindre bas-poly
-function drawCylinder(modelM, r,h,segs, hue,sat,lt, alpha=1){
-  const hs=h/2;
-  const faces=[];
+function drawCylinder(modelM,r,h,segs,hue,sat,lt,alpha=1){
+  const hs=h/2,faces=[];
   for(let i=0;i<segs;i++){
-    const a0=i/segs*Math.PI*2, a1=(i+1)/segs*Math.PI*2;
+    const a0=i/segs*Math.PI*2,a1=(i+1)/segs*Math.PI*2;
     const c0=Math.cos(a0),s0=Math.sin(a0),c1=Math.cos(a1),s1=Math.sin(a1);
     const p0=applyM(VIEW,applyM(modelM,[c0*r,-hs,s0*r]));
-    const p1=applyM(VIEW,applyM(modelM,[c0*r, hs,s0*r]));
-    const p2=applyM(VIEW,applyM(modelM,[c1*r, hs,s1*r]));
+    const p1=applyM(VIEW,applyM(modelM,[c0*r,hs,s0*r]));
+    const p2=applyM(VIEW,applyM(modelM,[c1*r,hs,s1*r]));
     const p3=applyM(VIEW,applyM(modelM,[c1*r,-hs,s1*r]));
-    const depth=(p0[2]+p1[2]+p2[2]+p3[2])/4;
-    const nx=(c0+c1)/2, nz=(s0+s1)/2;
-    faces.push({pts:[project(p0),project(p1),project(p2),project(p3)], depth, nx, nz});
+    faces.push({pts:[project(p0),project(p1),project(p2),project(p3)],
+      depth:(p0[2]+p1[2]+p2[2]+p3[2])/4,nx:(c0+c1)/2,nz:(s0+s1)/2});
   }
   faces.sort((a,b)=>b.depth-a.depth);
   faces.forEach(f=>{
     if(f.pts.some(p=>!p))return;
-    const col=lightColor(f.nx,0,f.nz, hue,sat,lt);
     ctx.globalAlpha=alpha;
-    drawFace(f.pts, col, null);
+    drawFace(f.pts,lightColor(f.nx,0,f.nz,hue,sat,lt),null);
     ctx.globalAlpha=1;
   });
 }
 
-// Cône bas-poly
-function drawCone(modelM, r,h,segs, hue,sat,lt){
+function drawCone(modelM,r,h,segs,hue,sat,lt){
   const faces=[];
   for(let i=0;i<segs;i++){
-    const a0=i/segs*Math.PI*2, a1=(i+1)/segs*Math.PI*2;
+    const a0=i/segs*Math.PI*2,a1=(i+1)/segs*Math.PI*2;
     const c0=Math.cos(a0),s0=Math.sin(a0),c1=Math.cos(a1),s1=Math.sin(a1);
     const tip=applyM(VIEW,applyM(modelM,[0,h,0]));
-    const b0 =applyM(VIEW,applyM(modelM,[c0*r,0,s0*r]));
-    const b1 =applyM(VIEW,applyM(modelM,[c1*r,0,s1*r]));
-    const depth=(tip[2]+b0[2]+b1[2])/3;
-    const nx=(c0+c1)/2, nz=(s0+s1)/2;
-    faces.push({pts:[project(tip),project(b0),project(b1)], depth, nx, nz});
+    const b0=applyM(VIEW,applyM(modelM,[c0*r,0,s0*r]));
+    const b1=applyM(VIEW,applyM(modelM,[c1*r,0,s1*r]));
+    faces.push({pts:[project(tip),project(b0),project(b1)],
+      depth:(tip[2]+b0[2]+b1[2])/3,nx:(c0+c1)/2,nz:(s0+s1)/2});
   }
   faces.sort((a,b)=>b.depth-a.depth);
   faces.forEach(f=>{
     if(f.pts.some(p=>!p))return;
-    const col=lightColor(f.nx,0.3,f.nz, hue,sat,lt);
-    drawFace(f.pts, col, null);
+    drawFace(f.pts,lightColor(f.nx,.3,f.nz,hue,sat,lt),null);
   });
 }
 
-// Plan horizontal (sol, piste)
-function drawPlane(modelM, w,d, color){
+function drawPlane(modelM,w,d,color,alpha=1){
   const hw=w/2,hd=d/2;
-  const corners=[[-hw,0,-hd],[hw,0,-hd],[hw,0,hd],[-hw,0,hd]];
-  const pts=corners.map(p=>project(applyM(VIEW,applyM(modelM,p))));
-  if(pts.some(p=>!p)) return;
-  drawFace(pts, color, null);
+  const pts=[[-hw,0,-hd],[hw,0,-hd],[hw,0,hd],[-hw,0,hd]]
+    .map(p=>project(applyM(VIEW,applyM(modelM,p))));
+  if(pts.some(p=>!p))return;
+  ctx.globalAlpha=alpha;
+  drawFace(pts,color,null);
+  ctx.globalAlpha=1;
 }
 
 // ═══════════════════════════════════════════════════════
-// SCÈNE ET MONDE
+// MONDE : VILLES AVEC AÉROPORTS
 // ═══════════════════════════════════════════════════════
-// Seed aléatoire déterministe
-function sr(n){ return ((Math.sin(n*127.1)*43758.5453)%1+1)%1; }
+function sr(n){return((Math.sin(n*127.1)*43758.5453)%1+1)%1;}
 
-// Types de végétation : conifère, feuillu, palmier
-const TREES=[];
-for(let i=0;i<140;i++){
-  const type=Math.floor(sr(i*7+6)*3); // 0=conifère 1=feuillu 2=palmier
-  TREES.push({x:(sr(i*3)-.5)*900,z:(sr(i*3+1)-.5)*900,s:.5+sr(i*3+2)*.9,type});
-}
+// 5 villes avec aéroport chacune
+const CITIES=[
+  {name:'Paris',      x:0,   z:0,   hdg:0,    pop:120},
+  {name:'Lyon',       x:600, z:200, hdg:0.4,  pop:70},
+  {name:'Marseille',  x:-500,z:400, hdg:-0.3, pop:80},
+  {name:'Bordeaux',   x:200, z:-600,hdg:0.8,  pop:60},
+  {name:'Nice',       x:-200,z:600, hdg:1.2,  pop:50},
+];
 
-// Maisons/bâtiments (petits villages)
+// Générer les bâtiments de chaque ville
 const BUILDINGS=[];
-for(let v=0;v<6;v++){
-  const vx=(sr(v*11)-.5)*700, vz=(sr(v*11+1)-.5)*700;
-  for(let b=0;b<5+Math.floor(sr(v*11+2)*6);b++){
+CITIES.forEach((city,ci)=>{
+  const n=city.pop;
+  for(let b=0;b<n;b++){
+    const r=15+sr(ci*500+b*7)*city.pop*1.5;
+    const ang=sr(ci*500+b*7+1)*Math.PI*2;
+    const isCenter=r<city.pop*0.4;
     BUILDINGS.push({
-      x:vx+(sr(v*50+b*3)-.5)*60, z:vz+(sr(v*50+b*3+1)-.5)*60,
-      w:3+sr(v*50+b*3+2)*5, h:3+sr(v*50+b*3+3)*8, d:3+sr(v*50+b*3+4)*5,
-      hue:Math.floor(20+sr(v*50+b*3+5)*30), roof:sr(v*50+b*3+6)>.5
+      x:city.x+Math.cos(ang)*r, z:city.z+Math.sin(ang)*r,
+      w:isCenter?6+sr(ci*500+b*7+2)*10:3+sr(ci*500+b*7+2)*6,
+      h:isCenter?12+sr(ci*500+b*7+3)*40:3+sr(ci*500+b*7+3)*10,
+      d:isCenter?6+sr(ci*500+b*7+4)*10:3+sr(ci*500+b*7+4)*6,
+      hue:Math.floor(15+sr(ci*500+b*7+5)*40),
+      sat:Math.floor(10+sr(ci*500+b*7+6)*25),
+      city:ci
     });
   }
+});
+
+// Aéroports (un par ville)
+const AIRPORTS=CITIES.map((city,ci)=>{
+  const RWLEN=120,RWWID=16;
+  const hdg=city.hdg;
+  // Position de la piste : décalée du centre ville
+  const rwx=city.x+Math.cos(city.hdg+Math.PI/2)*80;
+  const rwz=city.z+Math.sin(city.hdg+Math.PI/2)*80;
+  return{
+    city:ci,name:city.name,
+    x:rwx,z:rwz,hdg,
+    RWLEN,RWWID,
+    cos:Math.cos(hdg),sin:Math.sin(hdg)
+  };
+});
+
+// Végétation
+const TREES=[];
+for(let i=0;i<180;i++){
+  const type=Math.floor(sr(i*7+6)*3);
+  TREES.push({x:(sr(i*3)-.5)*1800,z:(sr(i*3+1)-.5)*1800,s:.5+sr(i*3+2)*.9,type});
 }
 
-// Collines (quelques boîtes très aplaties pour relief au sol)
+// Collines
 const HILLS=[];
-for(let i=0;i<30;i++)
-  HILLS.push({x:(sr(i*9)-.5)*1200,z:(sr(i*9+1)-.5)*1200,r:20+sr(i*9+2)*60,h:4+sr(i*9+3)*12});
+for(let i=0;i<40;i++)
+  HILLS.push({x:(sr(i*9)-.5)*2000,z:(sr(i*9+1)-.5)*2000,r:25+sr(i*9+2)*70,h:5+sr(i*9+3)*18});
 
-// Nuages plus réalistes (plus gros, plus variés)
+// Nuages
 const CLOUDS=[];
-for(let i=0;i<28;i++) CLOUDS.push({
-  x:(sr(i*5)-.5)*900, y:60+sr(i*5+1)*80, z:(sr(i*5+2)-.5)*900,
+for(let i=0;i<35;i++) CLOUDS.push({
+  x:(sr(i*5)-.5)*1200,y:65+sr(i*5+1)*90,z:(sr(i*5+2)-.5)*1200,
   puffs:Array.from({length:5+Math.floor(sr(i*5+4)*5)},(_,j)=>({
-    dx:(sr(i*30+j*4)-.5)*14, dy:(sr(i*30+j*4+1)-.5)*3, dz:(sr(i*30+j*4+2)-.5)*8,
-    r:4+sr(i*30+j*4+3)*4
+    dx:(sr(i*30+j*4)-.5)*16,dy:(sr(i*30+j*4+1)-.5)*3,dz:(sr(i*30+j*4+2)-.5)*10,
+    r:5+sr(i*30+j*4+3)*5
   }))
 });
 
-// Rivière (quelques segments de plans bleus)
-const RIVER=[];
-for(let i=0;i<12;i++) RIVER.push({x:-80+i*35,z:120+sr(i*7)*20-10,w:12+sr(i*7+1)*8,d:28});
+// Rivières
+const RIVERS=[];
+for(let r=0;r<4;r++){
+  const rx=(sr(r*13)-.5)*800, rz=(sr(r*13+1)-.5)*800;
+  const rsegs=[];
+  for(let i=0;i<16;i++) rsegs.push({
+    x:rx+i*40+sr(r*100+i)*20-10,z:rz+sr(r*100+i+1)*40-20,
+    w:10+sr(r*100+i+2)*8,d:35
+  });
+  RIVERS.push(rsegs);
+}
 
-// Tuiles de sol
-const TILE=200, TG=5;
+// Tuiles sol
+const TILE=250,TG=5;
 const TILES=[];
-for(let i=0;i<TG;i++) for(let j=0;j<TG;j++)
-  TILES.push({x:(i-2)*TILE, z:(j-2)*TILE, h:Math.round(45+sr(i*5+j)*15)});
-
-// Piste
-const RWX=250,RWZ=30,RWLEN=90,RWWID=14,RWHDG=0;
-const rwCos=Math.cos(RWHDG),rwSin=Math.sin(RWHDG);
+for(let i=0;i<TG;i++)for(let j=0;j<TG;j++)
+  TILES.push({x:(i-2)*TILE,z:(j-2)*TILE});
 
 // ═══════════════════════════════════════════════════════
 // VOL
 // ═══════════════════════════════════════════════════════
-let px=0,py=40,pz=0, pitch=0,roll=0,yaw=0,speed=28;
-const MIN_SPD=14,MAX_SPD=55;
+let px=0,py=40,pz=0,pitch=0,roll=0,yaw=0,speed=28;
+const MIN_SPD=12,MAX_SPD=60;
 let vertSpd=0,prevPY=40;
 let camX=0,camY=44,camZ=-12,lkX=0,lkY=40,lkZ=0;
 let propAngle=0;
 let gameRunning=true,totalDist=0,crashed=false,lastT=performance.now();
+let stabActive=false;
 
-// Atterrissage
-const LV=6,LP=14,LA=20,LL=7,APPR=380;
+// Piste cible (ville la plus proche)
+let targetAirport=AIRPORTS[0];
+const LV=6,LP=14,LA=22,LL=8,APPR=500;
 let inApproach=false,landDone=false,beepT=0;
 
-// Messages
 const CMsgs={
-  hors:["Presque — mais la piste était un peu plus loin !","Tu avais de l'élan, vise le tarmac.","Le sol n'était pas la bonne piste. On réessaie ?"],
-  vit:["Belle approche, mais un peu brusque !","Descends plus doucement en finale.","Presque ! Moins de vitesse verticale."],
-  pitch:["L'angle était trop fort. Nez légèrement relevé.","Trop piqué en finale. Redresse avant de toucher.","L'assiette était trop prononcée."],
-  align:["Aligne-toi avec l'axe de la piste.","Un peu de dérive en finale.","Beau vol ! Juste l'alignement."],
-  sol:["Le sol n'était pas prévu là !","Un peu tôt pour atterrir ici.","Ce n'était pas la piste, mais bravo !"]
+  hors:["Presque — mais la piste était plus loin !","Vise le tarmac.","Ce n'était pas la piste !"],
+  vit:["Belle approche, trop brusque !","Descends plus doucement.","Moins de vitesse verticale."],
+  pitch:["Nez trop bas en finale.","Redresse avant de toucher.","Assiette trop prononcée."],
+  align:["Aligne-toi avec la piste.","Un peu de dérive.","Juste l'alignement."],
+  sol:["Le sol n'était pas prévu là !","Pas la piste, mais bravo !","Un peu tôt pour atterrir."]
 };
 const OKMsgs=["Posé comme une plume. Magnifique.","Atterrissage de capitaine !","Les passagers n'ont rien senti.","Douceur et précision.","Parfaitement centré sur la piste."];
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
@@ -352,82 +343,110 @@ const rnd=a=>a[Math.floor(Math.random()*a.length)];
 // ═══════════════════════════════════════════════════════
 let actx,masterG,muted=false,audioOn=false;
 function initAudio(){
-  if(audioOn)return; audioOn=true;
+  if(audioOn)return;audioOn=true;
   actx=new(window.AudioContext||window.webkitAudioContext)();
-  masterG=actx.createGain(); masterG.gain.value=0.15; masterG.connect(actx.destination);
+  masterG=actx.createGain();masterG.gain.value=0.14;masterG.connect(actx.destination);
   [220,261.6,329.6,392].forEach((f,i)=>{
     const o=actx.createOscillator(),g=actx.createGain();
     o.type='sine';o.frequency.value=f;
     g.gain.setValueAtTime(0,actx.currentTime);
-    g.gain.linearRampToValueAtTime(.18-i*.04,actx.currentTime+2.5+i*.4);
+    g.gain.linearRampToValueAtTime(.17-i*.04,actx.currentTime+2.5+i*.4);
     o.connect(g);g.connect(masterG);o.start();
   });
   [440,493.9,554.4,659.3,739.9,880,739.9,659.3,554.4,440].forEach((f,i)=>{
     const o=actx.createOscillator(),g=actx.createGain();
     o.type='triangle';o.frequency.value=f;
     const t=actx.currentTime+5+i*2.2;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.1,t+.3);
-    g.gain.setValueAtTime(.1,t+1.7);g.gain.linearRampToValueAtTime(0,t+2.2);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.09,t+.3);
+    g.gain.setValueAtTime(.09,t+1.7);g.gain.linearRampToValueAtTime(0,t+2.2);
     o.connect(g);g.connect(masterG);o.start(t);o.stop(t+2.3);
   });
 }
 function playOK(){if(!actx||muted)return;[523.2,659.3,783.9,1046.5].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;const t=actx.currentTime+i*.18;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.08);g.gain.exponentialRampToValueAtTime(.001,t+1);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+1.1);});}
 function playCrash(){if(!actx||muted)return;const b=actx.createBuffer(1,actx.sampleRate*.6,actx.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(actx.sampleRate*.1));const s=actx.createBufferSource(),g=actx.createGain();s.buffer=b;g.gain.value=.28;s.connect(g);g.connect(actx.destination);s.start();}
-function playBeep(){if(!actx||muted)return;const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.08,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.15);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+.17);}
+function playBeep(){if(!actx||muted)return;const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.07,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.15);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+.17);}
 
 document.getElementById('muteBtn').addEventListener('click',function(){
   muted=!muted;this.textContent=muted?'🔇':'🔊';
-  if(masterG)masterG.gain.setTargetAtTime(muted?0:.15,actx.currentTime,.3);
+  if(masterG)masterG.gain.setTargetAtTime(muted?0:.14,actx.currentTime,.3);
 });
 
 // ═══════════════════════════════════════════════════════
 // CONTRÔLES
 // ═══════════════════════════════════════════════════════
-const K={up:0,down:0,left:0,right:0,boost:0};
+const K={up:0,down:0,left:0,right:0,boost:0,stab:0};
 document.addEventListener('keydown',e=>{
   if(!audioOn)initAudio();
   const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Shift:'boost'};
   if(m[e.key]){K[m[e.key]]=1;e.preventDefault();}
+  if(e.key==='s'||e.key==='S'){K.stab=K.stab?0:1;updateStabUI();}
 });
 document.addEventListener('keyup',e=>{
   const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Shift:'boost'};
   if(m[e.key])K[m[e.key]]=0;
 });
+
+function updateStabUI(){
+  document.getElementById('stabHud').style.display=K.stab?'block':'none';
+  const tb=document.getElementById('tStab');
+  if(tb)tb.classList.toggle('on',!!K.stab);
+}
+
 const isTch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
-function bindT(id,key){
+function bindT(id,key,toggle=false){
   const el=document.getElementById(id);
-  const set=v=>{K[key]=v?1:0;el.classList.toggle('on',v);};
-  el.addEventListener('touchstart',e=>{e.preventDefault();if(!audioOn)initAudio();set(true);},{passive:false});
-  el.addEventListener('touchend',e=>{e.preventDefault();set(false);},{passive:false});
-  el.addEventListener('touchcancel',()=>set(false));
+  if(!el)return;
+  if(toggle){
+    el.addEventListener('touchstart',e=>{
+      e.preventDefault();if(!audioOn)initAudio();
+      K[key]=K[key]?0:1;el.classList.toggle('on',!!K[key]);updateStabUI();
+    },{passive:false});
+  } else {
+    const set=v=>{K[key]=v?1:0;el.classList.toggle('on',v);};
+    el.addEventListener('touchstart',e=>{e.preventDefault();if(!audioOn)initAudio();set(true);},{passive:false});
+    el.addEventListener('touchend',e=>{e.preventDefault();set(false);},{passive:false});
+    el.addEventListener('touchcancel',()=>set(false));
+  }
 }
 if(isTch){
   document.getElementById('tctl').style.display='block';
   document.getElementById('hint').style.display='none';
   ['tU','tD','tL','tR'].forEach((id,i)=>bindT(id,['up','down','left','right'][i]));
+  bindT('tStab','stab',true);
 }
 
 // ═══════════════════════════════════════════════════════
 // MISE À JOUR VOL
 // ═══════════════════════════════════════════════════════
 function update(dt){
-  pitch+=((K.up-K.down)*.55-pitch)*Math.min(1,dt*3);
+  // Stabilisateur automatique : ramène pitch et roll à zéro progressivement
+  if(K.stab){
+    if(!K.up&&!K.down)  pitch+=(0-pitch)*Math.min(1,dt*2.5);
+    if(!K.left&&!K.right)roll +=(0-roll )*Math.min(1,dt*2.5);
+  }
+
+  // Contrôles normaux
+  pitch+=((K.up-K.down)*.52-pitch)*Math.min(1,dt*3);
   pitch=Math.max(-.55,Math.min(.55,pitch));
-  roll+=((K.left-K.right)*.7-roll)*Math.min(1,dt*3);
-  roll=Math.max(-.7,Math.min(.7,roll));
-  yaw+=roll*dt*.8;
+  roll +=((K.left-K.right)*.68-roll)*Math.min(1,dt*3);
+  roll =Math.max(-.7,Math.min(.7,roll));
+  yaw  +=roll*dt*.8;
+
   const tgt=(K.boost?MAX_SPD:30)-pitch*18;
   speed+=(tgt-speed)*Math.min(1,dt*1.2);
   speed=Math.max(MIN_SPD,Math.min(MAX_SPD,speed));
+
   const fx=Math.cos(yaw),fz=Math.sin(yaw),fy=Math.sin(pitch)*.6;
   const fl=Math.sqrt(fx*fx+fy*fy+fz*fz);
   px+=fx/fl*speed*dt; py+=fy/fl*speed*dt; pz+=fz/fl*speed*dt;
   totalDist+=speed*dt;
   vertSpd=(py-prevPY)/Math.max(dt,.001); prevPY=py;
+
   if(py<=1.2){checkLand();if(!landDone){py=1.2;if(Math.abs(pitch)>.15||speed>35)doEnd(false,'sol');}}
-  py=Math.min(py,270);
+  py=Math.min(py,350);
   propAngle+=dt*speed*1.8;
-  // Caméra lerp
+
+  // Caméra souple derrière l'avion
   const ox=-10*Math.cos(yaw),oz=-10*Math.sin(yaw);
   camX+=(px+ox-camX)*Math.min(1,dt*3.5);
   camY+=(py+3.5-camY)*Math.min(1,dt*3.5);
@@ -435,40 +454,51 @@ function update(dt){
   lkX+=(px+5*Math.cos(yaw)-lkX)*Math.min(1,dt*3.5);
   lkY+=(py+.5-lkY)*Math.min(1,dt*3.5);
   lkZ+=(pz+5*Math.sin(yaw)-lkZ)*Math.min(1,dt*3.5);
+
   updateHUD(dt);
   recycleTiles();
   recycleDeco();
 }
 
+function nearestAirport(){
+  let best=null,bestD=Infinity;
+  AIRPORTS.forEach(a=>{
+    const d=Math.sqrt((a.x-px)**2+(a.z-pz)**2);
+    if(d<bestD){bestD=d;best=a;}
+  });
+  return best;
+}
+
 function checkLand(){
   if(landDone)return;
-  const dx=px-RWX,dz=pz-RWZ;
-  const along=dx*rwCos+dz*rwSin;
-  const lat=Math.abs(-dx*rwSin+dz*rwCos);
-  if(Math.abs(along)>RWLEN/2||lat>RWWID/2+1.5){doEnd(false,'hors');return;}
+  const a=targetAirport;
+  const dx=px-a.x,dz=pz-a.z;
+  const along=dx*a.cos+dz*a.sin;
+  const lat=Math.abs(-dx*a.sin+dz*a.cos);
+  if(Math.abs(along)>a.RWLEN/2||lat>a.RWWID/2+2){doEnd(false,'hors');return;}
   landDone=true;
   const pd=Math.abs(pitch*180/Math.PI);
   const fd=[Math.cos(yaw),Math.sin(yaw)];
-  let al=Math.acos(Math.min(1,Math.max(-1,fd[0]*rwCos+fd[1]*rwSin)))*180/Math.PI;
+  let al=Math.acos(Math.min(1,Math.max(-1,fd[0]*a.cos+fd[1]*a.sin)))*180/Math.PI;
   al=Math.min(al,180-al);
   if(Math.abs(vertSpd)<=LV&&pd<=LP&&al<=LA&&lat<=LL)doEnd(true);
   else{let c='vit';if(pd>LP)c='pitch';else if(al>LA)c='align';else if(lat>LL)c='sol';doEnd(false,c);}
 }
 
 function doEnd(ok,cat){
-  if(crashed)return; crashed=true; gameRunning=false;
+  if(crashed)return;crashed=true;gameRunning=false;
   document.getElementById('lhud').style.display='none';
   if(ok){
     playOK();
     const b=document.getElementById('banner');
-    b.innerHTML='🛬 '+rnd(OKMsgs)+'<br><span style="font-size:13px;opacity:.7">Appuie sur Redécoller pour repartir</span>';
+    b.innerHTML='🛬 '+rnd(OKMsgs)+' ('+targetAirport.name+')<br><span style="font-size:13px;opacity:.7">Appuie sur Redécoller pour repartir</span>';
     b.style.display='block';
     setTimeout(()=>{
       b.style.display='none';
-      document.getElementById('rtitle').textContent='✈ Posé !';
+      document.getElementById('rtitle').textContent='✈ Posé à '+targetAirport.name+' !';
       document.getElementById('rtitle').style.color='#7effa0';
       document.getElementById('rmsg').textContent=rnd(OKMsgs);
-      document.getElementById('rsub').textContent=Math.round(totalDist)+' m · Beau travail.';
+      document.getElementById('rsub').textContent=Math.round(totalDist*3)+' m parcourus · Bravo !';
       document.getElementById('result').style.display='flex';
     },2200);
   } else {
@@ -476,7 +506,7 @@ function doEnd(ok,cat){
     document.getElementById('rtitle').textContent='💥 Crash';
     document.getElementById('rtitle').style.color='#ff7878';
     document.getElementById('rmsg').textContent=rnd(CMsgs[cat]||CMsgs.sol);
-    document.getElementById('rsub').textContent=Math.round(totalDist)+' m parcourus.';
+    document.getElementById('rsub').textContent=Math.round(totalDist*3)+' m parcourus.';
     document.getElementById('result').style.display='flex';
   }
 }
@@ -488,223 +518,282 @@ function resetFlight(){
   document.getElementById('result').style.display='none';
   document.getElementById('banner').style.display='none';
   document.getElementById('lhud').style.display='none';
+  document.getElementById('cityName').style.display='none';
 }
 document.getElementById('rbtn').addEventListener('click',()=>{if(!audioOn)initAudio();resetFlight();});
 
 function updateHUD(dt){
   document.getElementById('altV').textContent=Math.round(py*3)+' m';
   document.getElementById('spdV').textContent=Math.round(speed*6)+' km/h';
-  const dx=RWX-px,dz=RWZ-pz,dH=Math.sqrt(dx*dx+dz*dz);
+
+  // Ville la plus proche pour compass et atterrissage
+  targetAirport=nearestAirport();
+  const a=targetAirport;
+  const dx=a.x-px,dz=a.z-pz,dH=Math.sqrt(dx*dx+dz*dz);
   let rel=((Math.atan2(dz,dx)-yaw)*180/Math.PI+540)%360-180;
   document.getElementById('carr').style.transform='rotate('+rel+'deg)';
-  document.getElementById('cdist').textContent=Math.round(dH)+' m';
+  document.getElementById('cdist').textContent=Math.round(dH*3)+' m';
+
+  // Nom de la ville proche
+  const cn=document.getElementById('cityName');
+  if(dH<300){cn.textContent='✈ '+a.name;cn.style.display='block';}
+  else cn.style.display='none';
+
   if(dH<APPR&&!inApproach){inApproach=true;document.getElementById('lhud').style.display='block';playBeep();}
   if(dH>=APPR&&inApproach&&!landDone){inApproach=false;document.getElementById('lhud').style.display='none';}
   if(inApproach){
     beepT+=dt;if(beepT>4){beepT=0;playBeep();}
-    const el1=document.getElementById('lvs'); el1.textContent=(-vertSpd*3).toFixed(1)+' m/s'; el1.className=Math.abs(vertSpd)<=LV?'ok':'bad';
-    const el2=document.getElementById('lpt'); el2.textContent=(pitch*180/Math.PI).toFixed(1)+'°'; el2.className=Math.abs(pitch*180/Math.PI)<=LP?'ok':'bad';
+    const el1=document.getElementById('lvs');el1.textContent=(-vertSpd*3).toFixed(1)+' m/s';el1.className=Math.abs(vertSpd)<=LV?'ok':'bad';
+    const el2=document.getElementById('lpt');el2.textContent=(pitch*180/Math.PI).toFixed(1)+'°';el2.className=Math.abs(pitch*180/Math.PI)<=LP?'ok':'bad';
     const fd=[Math.cos(yaw),Math.sin(yaw)];
-    let al=Math.acos(Math.min(1,Math.max(-1,fd[0]*rwCos+fd[1]*rwSin)))*180/Math.PI;
+    let al=Math.acos(Math.min(1,Math.max(-1,fd[0]*a.cos+fd[1]*a.sin)))*180/Math.PI;
     al=Math.min(al,180-al);
-    const el3=document.getElementById('lal'); el3.textContent=al.toFixed(1)+'°'; el3.className=al<=LA?'ok':'bad';
+    const el3=document.getElementById('lal');el3.textContent=al.toFixed(1)+'°';el3.className=al<=LA?'ok':'bad';
   }
 }
 
 function recycleTiles(){
   TILES.forEach(t=>{
-    while(t.x<px-TILE*2.5)t.x+=TILE*TG; while(t.x>px+TILE*2.5)t.x-=TILE*TG;
-    while(t.z<pz-TILE*2.5)t.z+=TILE*TG; while(t.z>pz+TILE*2.5)t.z-=TILE*TG;
+    while(t.x<px-TILE*2.5)t.x+=TILE*TG;while(t.x>px+TILE*2.5)t.x-=TILE*TG;
+    while(t.z<pz-TILE*2.5)t.z+=TILE*TG;while(t.z>pz+TILE*2.5)t.z-=TILE*TG;
   });
 }
 function recycleDeco(){
-  const R=500;
-  TREES.forEach(t=>{ if(t.x<px-R)t.x+=R*2;if(t.x>px+R)t.x-=R*2;if(t.z<pz-R)t.z+=R*2;if(t.z>pz+R)t.z-=R*2; });
-  BUILDINGS.forEach(b=>{ if(b.x<px-R)b.x+=R*2;if(b.x>px+R)b.x-=R*2;if(b.z<pz-R)b.z+=R*2;if(b.z>pz+R)b.z-=R*2; });
-  CLOUDS.forEach(c=>{ if(c.x<px-600)c.x+=1200;if(c.x>px+600)c.x-=1200;if(c.z<pz-600)c.z+=1200;if(c.z>pz+600)c.z-=1200; });
+  const R=700;
+  TREES.forEach(t=>{if(t.x<px-R)t.x+=R*2;if(t.x>px+R)t.x-=R*2;if(t.z<pz-R)t.z+=R*2;if(t.z>pz+R)t.z-=R*2;});
+  CLOUDS.forEach(c=>{if(c.x<px-800)c.x+=1600;if(c.x>px+800)c.x-=1600;if(c.z<pz-800)c.z+=1600;if(c.z>pz+800)c.z-=1600;});
 }
 
 // ═══════════════════════════════════════════════════════
-// DESSIN DE LA SCÈNE
+// DESSIN
 // ═══════════════════════════════════════════════════════
+function drawAirport(ap){
+  const rm=mulM(translate(ap.x,.05,ap.z),rotY(-ap.hdg));
+  const L=ap.RWLEN,W2=ap.RWWID;
+  // Tarmac
+  drawPlane(rm,L+30,W2+40,'#333a3f');
+  // Piste principale
+  drawPlane(rm,L,W2,'#2a2f33');
+  // Lignes centrales
+  for(let i=0;i<11;i++){
+    const ox=(-L/2+8+i*10)*ap.cos,oz=(-L/2+8+i*10)*ap.sin;
+    drawPlane(mulM(translate(ap.x+ox,.07,ap.z+oz),rotY(-ap.hdg)),5,.8,'#ddd');
+  }
+  // Bords
+  [-W2/2+.5,W2/2-.5].forEach(zOff=>{
+    const ex=-zOff*ap.sin,ez=zOff*ap.cos;
+    drawPlane(mulM(translate(ap.x+ex,.07,ap.z+ez),rotY(-ap.hdg)),L,.5,'#ddd');
+  });
+  // Seuil de piste (jaune)
+  for(let z=-3;z<=3;z+=1.5){
+    const tx=(-L/2+4)*ap.cos-z*ap.sin,tz=(-L/2+4)*ap.sin+z*ap.cos;
+    drawPlane(mulM(translate(ap.x+tx,.07,ap.z+tz),rotY(-ap.hdg)),5,.7,'#f0d020');
+  }
+  // Taxiway
+  const twx=ap.x+W2*ap.sin*(-1),twz=ap.z+W2*ap.cos;
+  drawPlane(mulM(translate(twx,.04,twz),rotY(-ap.hdg)),L*.6,8,'#3a4040');
+
+  // Tour de contrôle
+  const tcx=ap.x+ap.sin*(W2/2+12),tcz=ap.z+ap.cos*(W2/2+12);
+  drawCylinder(mulM(translate(tcx,6,tcz)),1.3,12,10,42,25,52);
+  drawBox(mulM(translate(tcx,13,tcz)),5,2.5,5,195,45,58,0.9);
+  // Vitres tour
+  drawBox(mulM(translate(tcx,13.5,tcz-2.6)),4.5,1.5,.1,210,40,32,0.85);
+  // Hangar
+  const hgx=ap.x+ap.cos*(-L/2+15)-ap.sin*(W2/2+18);
+  const hgz=ap.z+ap.sin*(-L/2+15)+ap.cos*(W2/2+18);
+  drawBox(mulM(translate(hgx,5,hgz),rotY(-ap.hdg)),30,10,20,210,15,45);
+  drawBox(mulM(translate(hgx,10.5,hgz),rotY(-ap.hdg)),30,2,20,210,10,38);
+  // Balises d'approche (feux rouges sur le sol)
+  for(let i=1;i<=5;i++){
+    const bx=ap.x+ap.cos*(-L/2-i*15),bz=ap.z+ap.sin*(-L/2-i*15);
+    drawBox(mulM(translate(bx,.5,bz)),0.4,1,.4,0,80,50);
+  }
+}
+
+function drawCity(city,ci){
+  const dist=Math.sqrt((city.x-px)**2+(city.z-pz)**2);
+  if(dist>900)return;
+
+  // Bâtiments de cette ville
+  BUILDINGS.filter(b=>b.city===ci).forEach(b=>{
+    const bd=Math.sqrt((b.x-px)**2+(b.z-pz)**2);
+    if(bd>600)return;
+    // Murs
+    drawBox(translate(b.x,b.h/2,b.z),b.w,b.h,b.d,b.hue,b.sat,52);
+    // Toit
+    if(b.h>15){
+      // Immeuble : toit plat avec bordure
+      drawBox(translate(b.x,b.h+.3,b.z),b.w,0.6,b.d,b.hue,b.sat,38);
+      // Antenne
+      drawCylinder(mulM(translate(b.x,b.h+2,b.z)),0.1,4,4,0,0,45);
+    } else {
+      // Maison : toit pentu (rouge brique)
+      drawBox(translate(b.x,b.h+.6,b.z),b.w+.4,1.2,b.d+.4,8,55,36);
+    }
+    // Fenêtres (rangées)
+    if(b.h>8){
+      for(let fl=1;fl<Math.floor(b.h/4);fl++){
+        drawBox(translate(b.x,fl*4,b.z-b.d/2-.06),b.w*.5,1.2,.1,210,20,22,.92);
+      }
+    }
+  });
+}
+
 function drawScene(){
-  // Construire la matrice de vue
-  VIEW=buildView(camX,camY,camZ, lkX,lkY,lkZ);
+  VIEW=buildView(camX,camY,camZ,lkX,lkY,lkZ);
 
-  // ── Ciel + Sol (fond 2D avec horizon correct) ──────
-  // Projeter un point très loin au niveau du sol pour trouver la ligne d'horizon
-  const farX=camX+(lkX-camX)*1000, farZ=camZ+(lkZ-camZ)*1000;
+  // Horizon
+  const farX=camX+(lkX-camX)*1000,farZ=camZ+(lkZ-camZ)*1000;
   const farV=applyM(VIEW,[farX,0,farZ]);
-  let horizonY = CY;
-  if(farV[2]>0.1) horizonY = CY - farV[1]/farV[2]*FOCAL;
-  horizonY = Math.max(0, Math.min(H, horizonY));
+  let horizonY=CY;
+  if(farV[2]>0.1)horizonY=CY-farV[1]/farV[2]*FOCAL;
+  horizonY=Math.max(0,Math.min(H,horizonY));
 
-  // Ciel
+  // Ciel crépusculaire
   const skyG=ctx.createLinearGradient(0,0,0,horizonY);
-  skyG.addColorStop(0,'#07122b');
-  skyG.addColorStop(0.4,'#0f2a5e');
-  skyG.addColorStop(0.8,'#2060b8');
-  skyG.addColorStop(0.93,'#f08030');
-  skyG.addColorStop(1,'#f5c060');
-  ctx.fillStyle=skyG; ctx.fillRect(0,0,W,horizonY);
-  // Sol de fond (vert prairies)
-  const gndG=ctx.createLinearGradient(0,horizonY,0,H);
-  gndG.addColorStop(0,'#6a9e35');
-  gndG.addColorStop(0.4,'#5a8a28');
-  gndG.addColorStop(1,'#3d6018');
-  ctx.fillStyle=gndG; ctx.fillRect(0,horizonY,W,H-horizonY);
+  skyG.addColorStop(0,'#060e22');
+  skyG.addColorStop(0.35,'#0d2355');
+  skyG.addColorStop(0.75,'#1a5aaa');
+  skyG.addColorStop(0.9,'#e8641a');
+  skyG.addColorStop(1,'#f5c045');
+  ctx.fillStyle=skyG;ctx.fillRect(0,0,W,horizonY);
 
-  // Piste
-  {
-    const rm=mulM(translate(RWX,.05,RWZ),rotY(-RWHDG));
-    drawPlane(rm,RWLEN,RWWID,'#2e3337');
-    for(let i=0;i<9;i++){
-      const ox=(-RWLEN/2+6+i*9)*rwCos,oz=(-RWLEN/2+6+i*9)*rwSin;
-      drawPlane(mulM(translate(RWX+ox,.07,RWZ+oz),rotY(-RWHDG)),4,.8,'#e8e8e8');
+  // Sol
+  const gndG=ctx.createLinearGradient(0,horizonY,0,H);
+  gndG.addColorStop(0,'#5a9230');
+  gndG.addColorStop(0.5,'#4a7a22');
+  gndG.addColorStop(1,'#2f5010');
+  ctx.fillStyle=gndG;ctx.fillRect(0,horizonY,W,H-horizonY);
+
+  // Étoiles (si l'horizon est assez bas)
+  if(horizonY>50){
+    ctx.fillStyle='#fff';
+    for(let s=0;s<60;s++){
+      const sx=(sr(s*7)*W)|0,sy=(sr(s*7+1)*horizonY*.7)|0;
+      ctx.globalAlpha=.4+sr(s*7+2)*.5;
+      ctx.fillRect(sx,sy,1,1);
     }
-    [-RWWID/2+.4,RWWID/2-.4].forEach(z=>{
-      const ex=-z*rwSin,ez=z*rwCos;
-      drawPlane(mulM(translate(RWX+ex,.07,RWZ+ez),rotY(-RWHDG)),RWLEN,.5,'#e8e8e8');
-    });
-    for(let z=-5;z<=5;z+=2){
-      const tx=(-RWLEN/2+3)*rwCos-z*rwSin,tz=(-RWLEN/2+3)*rwSin+z*rwCos;
-      drawPlane(mulM(translate(RWX+tx,.07,RWZ+tz),rotY(-RWHDG)),5,.7,'#f0d020');
-    }
-    // Tour de contrôle
-    drawCylinder(mulM(translate(RWX,4,RWZ+RWWID/2+9),scaleM(1,1,1)),1.2,8,8,42,30,55);
-    drawBox(mulM(translate(RWX,9.5,RWZ+RWWID/2+9),identity()),4.4,2,4.4,195,50,60,0.85);
+    ctx.globalAlpha=1;
   }
 
-  // Rivière
-  RIVER.forEach(r=>{
-    drawPlane(translate(r.x,0.02,r.z),r.w,r.d,'#3a7abf');
-  });
+  // Rivières
+  RIVERS.forEach(segs=>segs.forEach(r=>{
+    if(Math.sqrt((r.x-px)**2+(r.z-pz)**2)>600)return;
+    drawPlane(translate(r.x,.03,r.z),r.w,r.d,'#3272b8',.9);
+  }));
 
-  // Collines (relief sol)
+  // Collines
   HILLS.forEach(h=>{
-    const dist=Math.sqrt((h.x-px)**2+(h.z-pz)**2);
-    if(dist>600)return;
-    drawBox(mulM(translate(h.x,h.h/2,h.z),scaleM(1,1,1)),h.r*2,h.h,h.r*2,100,35,28,0.7);
+    if(Math.sqrt((h.x-px)**2+(h.z-pz)**2)>700)return;
+    drawBox(mulM(translate(h.x,h.h/2,h.z)),h.r*2,h.h,h.r*2,100,30,26,.75);
   });
 
-  // Bâtiments
-  BUILDINGS.forEach(b=>{
-    const dist=Math.sqrt((b.x-px)**2+(b.z-pz)**2);
-    if(dist>450)return;
-    // Murs
-    drawBox(translate(b.x,b.h/2,b.z),b.w,b.h,b.d,b.hue,30,55);
-    // Toit (rouge brique ou gris ardoise)
-    if(b.roof){
-      drawBox(translate(b.x,b.h+0.5,b.z),b.w+0.3,1,b.d+0.3,10,55,38);
-    } else {
-      drawBox(translate(b.x,b.h+0.3,b.z),b.w+0.3,0.6,b.d+0.3,220,20,40);
-    }
-    // Fenêtres (petites boîtes sombres)
-    if(b.h>5){
-      drawBox(translate(b.x,b.h*.55,b.z-b.d/2-.05),b.w*.35,b.h*.18,0.1,210,15,20,0.9);
-    }
+  // Villes + aéroports
+  CITIES.forEach((city,ci)=>{
+    drawCity(city,ci);
+    drawAirport(AIRPORTS[ci]);
   });
 
-  // Arbres (3 types)
+  // Végétation
   TREES.forEach(t=>{
     const s=t.s;
-    const dist=Math.sqrt((t.x-px)**2+(t.z-pz)**2);
-    if(dist>420)return;
+    if(Math.sqrt((t.x-px)**2+(t.z-pz)**2)>480)return;
     if(t.type===0){
-      // Conifère : tronc brun + 2 cônes superposés
-      drawCylinder(mulM(translate(t.x,1.5*s,t.z),scaleM(s*.4,s,s*.4)),0.4,3,6,25,40,28);
-      drawCone(mulM(translate(t.x,3*s,t.z),scaleM(s,s,s)),2.2,5,8,115,55,30);
-      drawCone(mulM(translate(t.x,5.5*s,t.z),scaleM(s*.7,s*.7,s*.7)),1.5,3.5,8,115,55,36);
+      // Conifère
+      drawCylinder(mulM(translate(t.x,1.5*s,t.z),scaleM(s*.4,s,s*.4)),0.4,3,6,25,35,26);
+      drawCone(mulM(translate(t.x,3*s,t.z),scaleM(s,s,s)),2.2,5,8,118,52,28);
+      drawCone(mulM(translate(t.x,5.6*s,t.z),scaleM(s*.7,s*.7,s*.7)),1.5,3.5,8,118,52,34);
     } else if(t.type===1){
-      // Feuillu : tronc + sphère (cylindre aplati)
-      drawCylinder(mulM(translate(t.x,2*s,t.z),scaleM(s*.4,s,s*.4)),0.4,4,6,25,35,28);
-      drawCylinder(mulM(translate(t.x,5.5*s,t.z),scaleM(s*1.8,s*1.2,s*1.8)),1,1,10,100,45,32);
+      // Feuillu
+      drawCylinder(mulM(translate(t.x,2*s,t.z),scaleM(s*.4,s,s*.4)),0.4,4,6,25,30,26);
+      drawCylinder(mulM(translate(t.x,5.5*s,t.z),scaleM(s*1.9,s*1.2,s*1.9)),1,1,10,105,42,30);
     } else {
-      // Palmier : tronc élancé + feuilles (cônes plats)
-      drawCylinder(mulM(translate(t.x,3.5*s,t.z),scaleM(s*.3,s,s*.3)),0.3,7,6,30,30,42);
+      // Palmier
+      drawCylinder(mulM(translate(t.x,3.5*s,t.z),scaleM(s*.28,s,s*.28)),0.3,7,6,28,28,40);
       for(let a=0;a<6;a++){
         const ang=a/6*Math.PI*2;
-        drawBox(mulM(translate(t.x+Math.cos(ang)*2*s,7.2*s,t.z+Math.sin(ang)*2*s),rotY(-ang)),0.3,0.15,2.5*s,100,60,32);
+        drawBox(mulM(translate(t.x+Math.cos(ang)*2.2*s,7.5*s,t.z+Math.sin(ang)*2.2*s),rotY(-ang)),0.3,0.14,2.8*s,105,58,30);
       }
     }
   });
 
-  // Nuages volumétriques
+  // Nuages
   CLOUDS.forEach(c=>{
     c.puffs.forEach(p=>{
-      const m=mulM(translate(c.x+p.dx,c.y+p.dy,c.z+p.dz),scaleM(p.r*1.4,p.r*.5,p.r));
-      drawCylinder(m,1,1,10,25,15,92,0.88);
+      const m=mulM(translate(c.x+p.dx,c.y+p.dy,c.z+p.dz),scaleM(p.r*1.5,p.r*.5,p.r));
+      drawCylinder(m,1,1,10,25,12,90,.82);
     });
   });
 
-  // ── Avion ──────────────────────────────────────────
-  const planeBase = mulM(
-    mulM(mulM(translate(px,py,pz), rotY(-yaw)), rotX(-pitch*.9)), rotZ(-roll)
-  );
+  // ── AVION ─────────────────────────────────────────────
+  const planeBase=mulM(mulM(mulM(translate(px,py,pz),rotY(-yaw)),rotX(-pitch*.9)),rotZ(-roll));
 
-  // --- Fuselage principal (3 segments : arrière, milieu, avant)
-  drawCylinder(mulM(planeBase,mulM(translate(-1.4,0,0),rotZ(Math.PI/2))),0.42,2.2,12,210,15,75); // arrière
-  drawCylinder(mulM(planeBase,mulM(translate( 0.3,0,0),rotZ(Math.PI/2))),0.56,3.2,12,210,15,80); // milieu
-  drawCylinder(mulM(planeBase,mulM(translate( 2.0,0,0),rotZ(Math.PI/2))),0.48,1.4,12,210,15,78); // avant
-  // Nez arrondi
-  drawCone(mulM(planeBase,mulM(translate(2.8,0,0),rotZ(-Math.PI/2))),0.45,1.1,12,215,10,68);
+  // Fuselage (3 cylindres coniques)
+  drawCylinder(mulM(planeBase,mulM(translate(-1.6,0,0),rotZ(Math.PI/2))),0.38,2.6,12,215,12,72);
+  drawCylinder(mulM(planeBase,mulM(translate(0.2,0,0),rotZ(Math.PI/2))),0.56,3.6,12,215,12,80);
+  drawCylinder(mulM(planeBase,mulM(translate(2.1,0,0),rotZ(Math.PI/2))),0.44,1.6,12,215,12,76);
+  // Nez
+  drawCone(mulM(planeBase,mulM(translate(3.0,0,0),rotZ(-Math.PI/2))),0.42,1.2,12,220,8,65);
+  // Jonction queue–fuselage (effilage)
+  drawCone(mulM(planeBase,mulM(translate(-2.9,0,0),rotZ(Math.PI/2))),0.32,1.0,10,215,10,62);
 
-  // --- Cockpit vitré (bleu sombre légèrement transparent)
-  drawBox(mulM(planeBase,translate(0.9,0.42,0)),0.8,0.52,0.72,210,30,28,0.9);
-  // Bord d'attaque du cockpit (cadre métallique)
-  drawBox(mulM(planeBase,translate(1.3,0.38,0)),0.12,0.46,0.74,210,15,55);
+  // Cockpit
+  drawBox(mulM(planeBase,translate(0.9,0.44,0)),1.0,.56,.78,210,35,26,.92);
+  drawBox(mulM(planeBase,translate(1.4,0.40,0)),.14,.48,.80,210,15,52);
 
-  // --- Aile principale (droite + gauche avec dièdre léger)
-  drawBox(mulM(planeBase,mulM(translate(0.1,0.1, 1.9),rotZ( 0.07))),1.1,0.14,3.6,220,60,62);
-  drawBox(mulM(planeBase,mulM(translate(0.1,0.1,-1.9),rotZ(-0.07))),1.1,0.14,3.6,220,60,62);
+  // Ailes principales avec dièdre
+  drawBox(mulM(planeBase,mulM(translate(0.1,.12,2.0),rotZ(.06))),1.2,.13,4.0,222,58,60);
+  drawBox(mulM(planeBase,mulM(translate(0.1,.12,-2.0),rotZ(-.06))),1.2,.13,4.0,222,58,60);
   // Winglets
-  drawBox(mulM(planeBase,mulM(translate(0.1,0.52, 3.65),rotZ(0.3))),0.6,0.14,0.22,220,55,55);
-  drawBox(mulM(planeBase,mulM(translate(0.1,0.52,-3.65),rotZ(-0.3))),0.6,0.14,0.22,220,55,55);
-  // Volets (bord de fuite, légèrement plus sombres)
-  drawBox(mulM(planeBase,translate(-0.35,0.1, 1.5)),0.5,0.1,2.8,215,55,48);
-  drawBox(mulM(planeBase,translate(-0.35,0.1,-1.5)),0.5,0.1,2.8,215,55,48);
+  drawBox(mulM(planeBase,mulM(translate(0.1,.58,3.9),rotZ(.28))),0.65,.13,.24,222,52,52);
+  drawBox(mulM(planeBase,mulM(translate(0.1,.58,-3.9),rotZ(-.28))),0.65,.13,.24,222,52,52);
+  // Volets
+  drawBox(mulM(planeBase,translate(-.38,.12,1.6)),.52,.10,3.0,218,52,46);
+  drawBox(mulM(planeBase,translate(-.38,.12,-1.6)),.52,.10,3.0,218,52,46);
 
-  // --- Empennage horizontal
-  drawBox(mulM(planeBase,translate(-2.1,0.1, 1.1)),0.7,0.1,2.1,210,20,60);
-  drawBox(mulM(planeBase,translate(-2.1,0.1,-1.1)),0.7,0.1,2.1,210,20,60);
-  // Dérive verticale
-  drawBox(mulM(planeBase,translate(-2.0,0.7,0)),0.7,1.3,0.12,210,20,58);
-  // Gouverne de direction
-  drawBox(mulM(planeBase,translate(-2.5,0.6,0)),0.5,1.0,0.1,210,15,45);
+  // Empennage horizontal
+  drawBox(mulM(planeBase,translate(-2.3,.12,1.2)),.75,.10,2.3,215,18,58);
+  drawBox(mulM(planeBase,translate(-2.3,.12,-1.2)),.75,.10,2.3,215,18,58);
+  // Dérive
+  drawBox(mulM(planeBase,translate(-2.1,.78,0)),.8,1.4,.12,215,18,55);
+  // Gouverne
+  drawBox(mulM(planeBase,translate(-2.65,.65,0)),.55,1.1,.10,215,15,42);
 
-  // --- Moteurs (2 nacelles sous les ailes)
-  [-1.5,1.5].forEach(z=>{
-    drawCylinder(mulM(planeBase,mulM(translate(0.2,-0.28,z),rotZ(Math.PI/2))),0.28,1.4,10,30,15,42);
-    drawCone(mulM(planeBase,mulM(translate(0.98,-0.28,z),rotZ(-Math.PI/2))),0.28,0.4,10,30,10,55);
-    // Pylône moteur
-    drawBox(mulM(planeBase,translate(0.2,-0.1,z)),0.9,0.26,0.18,210,10,45);
+  // 2 Moteurs
+  [-1.65,1.65].forEach(z=>{
+    drawCylinder(mulM(planeBase,mulM(translate(0.2,-.30,z),rotZ(Math.PI/2))),.30,1.6,10,28,12,40);
+    drawCone(mulM(planeBase,mulM(translate(1.1,-.30,z),rotZ(-Math.PI/2))),.30,.45,10,28,10,52);
+    // Pylône
+    drawBox(mulM(planeBase,translate(0.2,-.10,z)),.95,.28,.20,210,10,42);
+    // Entrée d'air (anneau sombre)
+    drawCylinder(mulM(planeBase,mulM(translate(-.68,-.30,z),rotZ(Math.PI/2))),.32,.12,10,0,0,15);
   });
 
-  // --- Hélices (4 pales par moteur)
+  // Hélices (4 pales, 2 moteurs)
   const pa=propAngle;
-  [-1.5,1.5].forEach((z,mi)=>{
-    const pBase=mulM(planeBase,translate(1.0,-0.28,z));
+  [-1.65,1.65].forEach((z,mi)=>{
+    const pB=mulM(planeBase,translate(1.12,-.30,z));
     for(let i=0;i<4;i++){
-      const ang=pa+(mi*.3)+i*Math.PI/2;
-      drawBox(mulM(pBase,rotX(ang)),0.08,1.3,0.18,0,0,22);
+      const ang=pa+(mi*.4)+i*Math.PI/2;
+      drawBox(mulM(pB,rotX(ang)),.09,1.4,.22,0,0,20);
     }
-    // Spinner
-    drawCone(mulM(pBase,rotZ(-Math.PI/2)),0.14,0.3,8,0,0,45);
+    drawCone(mulM(pB,rotZ(-Math.PI/2)),.15,.35,8,0,0,42);
   });
 
-  // --- Train d'atterrissage (3 points)
-  [-1.0,1.0].forEach(z=>{
-    drawBox(mulM(planeBase,translate(0.4,-0.62,z)),0.08,0.62,0.08,0,0,32);
-    drawCylinder(mulM(planeBase,mulM(translate(0.4,-0.95,z),rotX(Math.PI/2))),0.2,0.18,8,0,0,22);
+  // Train d'atterrissage principal
+  [-1.1,1.1].forEach(z=>{
+    drawBox(mulM(planeBase,translate(.4,-.65,z)),.09,.7,.09,0,0,30);
+    drawCylinder(mulM(planeBase,mulM(translate(.4,-.98,z),rotX(Math.PI/2))),.22,.20,8,0,0,20);
   });
-  // Roulette de nez
-  drawBox(mulM(planeBase,translate(2.1,-0.5,0)),0.08,0.5,0.08,0,0,32);
-  drawCylinder(mulM(planeBase,mulM(translate(2.1,-0.78,0),rotX(Math.PI/2))),0.14,0.14,8,0,0,22);
+  // Nez
+  drawBox(mulM(planeBase,translate(2.2,-.52,0)),.09,.52,.09,0,0,30);
+  drawCylinder(mulM(planeBase,mulM(translate(2.2,-.82,0),rotX(Math.PI/2))),.15,.15,8,0,0,20);
 
-  // --- Feux de navigation (petits cubes colorés)
-  drawBox(mulM(planeBase,translate(0.1,0.1, 3.72)),0.15,0.15,0.15,0,100,65);  // vert droite
-  drawBox(mulM(planeBase,translate(0.1,0.1,-3.72)),0.15,0.15,0.15,0,100,65);  // rouge gauche
-  drawBox(mulM(planeBase,translate(-2.0,1.4,0)),0.12,0.12,0.12,0,0,90);       // blanc queue
+  // Feux de navigation
+  drawBox(mulM(planeBase,translate(0.1,.12,3.98)),.16,.16,.16,120,100,55); // vert droite
+  drawBox(mulM(planeBase,translate(0.1,.12,-3.98)),.16,.16,.16,0,100,55);  // rouge gauche
+  drawBox(mulM(planeBase,translate(-2.1,1.5,0)),.13,.13,.13,0,0,88);       // blanc queue
 }
 
 // ═══════════════════════════════════════════════════════
@@ -713,11 +802,10 @@ function drawScene(){
 function loop(){
   requestAnimationFrame(loop);
   const now=performance.now();
-  const dt=Math.min((now-lastT)/1000,.05); lastT=now;
-  if(gameRunning) update(dt);
+  const dt=Math.min((now-lastT)/1000,.05);lastT=now;
+  if(gameRunning)update(dt);
   drawScene();
 }
-
 loop();
 </script>
 </body>
