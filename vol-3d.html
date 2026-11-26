@@ -111,34 +111,31 @@ function applyM(m,[x,y,z]){
   ];
 }
 
-// Vue : caméra -> coordonnées locales caméra
-// Convention : X=droite, Y=haut, Z=vers la caméra (OpenGL standard)
+// Vue : caméra -> espace caméra
+// Convention simple : Z positif = devant la caméra
 function buildView(ex,ey,ez,cx,cy,cz){
   // forward = normalize(target - eye)
-  let fx=cx-ex,fy=cy-ey,fz=cz-ez;
-  let fl=Math.sqrt(fx*fx+fy*fy+fz*fz)||1; fx/=fl;fy/=fl;fz/=fl;
-  // right = normalize(cross(forward, worldUp))
-  // cross(f, up=(0,1,0)) = (fy*0-fz*1, fz*0-fx*0, fx*1-fy*0) = (-fz, 0, fx)
-  // mais on veut right = cross(forward, up) pour main droite :
-  // right = cross(f, up) = (fz*1-fy*0, fx*0-fz*0, fy*0-fx*1) = ...
-  // Plus simple : right = cross((0,1,0), forward) donne left, donc :
-  // right = cross(forward, (0,-1,0)) = (fy*0-fz*(-1), fz*0-fx*0, fx*(-1)-fy*0) = (fz, 0, -fx)
-  // OU directement : right = normalize(fz, 0, -fx)
+  let fx=cx-ex, fy=cy-ey, fz=cz-ez;
+  const fl=Math.sqrt(fx*fx+fy*fy+fz*fz)||1; fx/=fl; fy/=fl; fz/=fl;
+  // right = cross(worldUp=(0,1,0), forward) → puis normaliser
+  // cross((0,1,0), f) = (1*fz-0*fy, 0*fx-0*fz, 0*fy-1*fx) = (fz, 0, -fx)
   let rx=fz, ry=0, rz=-fx;
   const rl=Math.sqrt(rx*rx+rz*rz)||1; rx/=rl; rz/=rl;
-  // up = cross(right, forward)
-  const ux=ry*fz-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy-ry*fx;
-  // Matrice view colonne-majeure [col*4+row]
-  // Row 0 = right, Row 1 = up, Row 2 = -forward (Z pointe vers la caméra)
+  // up = cross(forward, right)  [pour garder le trièdre direct]
+  const ux=fy*rz-fz*ry, uy=fz*rx-fx*rz, uz=fx*ry-fy*rx;
+  // Matrice de vue : chaque ligne = un axe de la base caméra
+  // m[col*4+row] stockage colonne-majeure
+  // row0=right, row1=up, row2=forward  → Z positif devant
   const m=m4();
-  m[0]=rx;  m[4]=ry;  m[8]=rz;   m[12]=-(rx*ex+ry*ey+rz*ez);
-  m[1]=ux;  m[5]=uy;  m[9]=uz;   m[13]=-(ux*ex+uy*ey+uz*ez);
-  m[2]=-fx; m[6]=-fy; m[10]=-fz; m[14]= (fx*ex+fy*ey+fz*ez);
+  m[0]=rx;  m[4]=ry;  m[8]=rz;  m[12]=-(rx*ex+ry*ey+rz*ez);
+  m[1]=ux;  m[5]=uy;  m[9]=uz;  m[13]=-(ux*ex+uy*ey+uz*ez);
+  m[2]=fx;  m[6]=fy;  m[10]=fz; m[14]=-(fx*ex+fy*ey+fz*ez);
   m[15]=1;
   return m;
 }
 
-// Projection : 3D -> écran 2D
+// Projection perspective : espace caméra → écran
+// Z positif = devant. Y positif = haut monde = haut écran (donc CY - ...)
 function project([x,y,z]){
   if(z<=0.1) return null;
   return [CX + x/z*FOCAL, CY - y/z*FOCAL, z];
