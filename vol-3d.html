@@ -111,22 +111,29 @@ function applyM(m,[x,y,z]){
   ];
 }
 
-// Vue : caméra -> coordonnées locales caméra (lookAt main droite)
+// Vue : caméra -> coordonnées locales caméra
+// Convention : X=droite, Y=haut, Z=vers la caméra (OpenGL standard)
 function buildView(ex,ey,ez,cx,cy,cz){
-  // Vecteur forward (de l'œil vers la cible), normalisé
+  // forward = normalize(target - eye)
   let fx=cx-ex,fy=cy-ey,fz=cz-ez;
   let fl=Math.sqrt(fx*fx+fy*fy+fz*fz)||1; fx/=fl;fy/=fl;fz/=fl;
-  // right = cross(forward, up=(0,1,0))
-  let rx= fz, ry=0, rz=-fx;
-  let rl=Math.sqrt(rx*rx+ry*ry+rz*rz)||1; rx/=rl;ry/=rl;rz/=rl;
-  // up réel = cross(right, forward)
-  const ox=ry*fz-rz*fy, oy=rz*fx-rx*fz, oz=rx*fy-ry*fx;
-  // Matrice view : transposée de la base + translation
-  // Stockage colonne-majeure : m[col*4+row]
+  // right = normalize(cross(forward, worldUp))
+  // cross(f, up=(0,1,0)) = (fy*0-fz*1, fz*0-fx*0, fx*1-fy*0) = (-fz, 0, fx)
+  // mais on veut right = cross(forward, up) pour main droite :
+  // right = cross(f, up) = (fz*1-fy*0, fx*0-fz*0, fy*0-fx*1) = ...
+  // Plus simple : right = cross((0,1,0), forward) donne left, donc :
+  // right = cross(forward, (0,-1,0)) = (fy*0-fz*(-1), fz*0-fx*0, fx*(-1)-fy*0) = (fz, 0, -fx)
+  // OU directement : right = normalize(fz, 0, -fx)
+  let rx=fz, ry=0, rz=-fx;
+  const rl=Math.sqrt(rx*rx+rz*rz)||1; rx/=rl; rz/=rl;
+  // up = cross(right, forward)
+  const ux=ry*fz-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy-ry*fx;
+  // Matrice view colonne-majeure [col*4+row]
+  // Row 0 = right, Row 1 = up, Row 2 = -forward (Z pointe vers la caméra)
   const m=m4();
   m[0]=rx;  m[4]=ry;  m[8]=rz;   m[12]=-(rx*ex+ry*ey+rz*ez);
-  m[1]=-ox; m[5]=-oy; m[9]=-oz;  m[13]= (ox*ex+oy*ey+oz*ez);
-  m[2]=fx;  m[6]=fy;  m[10]=fz;  m[14]=-(fx*ex+fy*ey+fz*ez);
+  m[1]=ux;  m[5]=uy;  m[9]=uz;   m[13]=-(ux*ex+uy*ey+uz*ez);
+  m[2]=-fx; m[6]=-fy; m[10]=-fz; m[14]= (fx*ex+fy*ey+fz*ez);
   m[15]=1;
   return m;
 }
@@ -134,7 +141,7 @@ function buildView(ex,ey,ez,cx,cy,cz){
 // Projection : 3D -> écran 2D
 function project([x,y,z]){
   if(z<=0.1) return null;
-  return [CX + x/z*FOCAL, CY + y/z*FOCAL, z];
+  return [CX + x/z*FOCAL, CY - y/z*FOCAL, z];
 }
 
 // ── Rendu : polygone plein (face 3D) ─────────────────
@@ -195,7 +202,7 @@ function drawBox(modelM, w,h,d, hue,sat,baseLt, alpha=1){
     const ax=b[0]-a[0],ay=b[1]-a[1],az=b[2]-a[2];
     const bx=c[0]-a[0],by=c[1]-a[1],bz=c[2]-a[2];
     const nz=ax*by-ay*bx;
-    if(nz<=0) return; // face cachée (convention main droite, Z vers caméra)
+    if(nz>=0) return; // face cachée
     const depth=(pts[0][2]+pts[1][2]+pts[2][2]+pts[3][2])/4;
     toRender.push({pts, depth, n:f.n});
   });
@@ -495,23 +502,26 @@ function recycleDeco(){
 // ═══════════════════════════════════════════════════════
 // DESSIN DE LA SCÈNE
 // ═══════════════════════════════════════════════════════
-function drawSky(){
-  const grad=ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,'#1a2f50');
-  grad.addColorStop(.45,'#f5904a');
-  grad.addColorStop(1,'#ffb86a');
-  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
-}
-
 function drawScene(){
   // Construire la matrice de vue
   VIEW=buildView(camX,camY,camZ, lkX,lkY,lkZ);
 
-  // Sol (tuiles)
-  TILES.forEach(t=>{
-    const m=translate(t.x,0,t.z);
-    drawPlane(m,TILE,TILE,`hsl(105,${32+t.h*.1}%,${t.h*.45}%)`);
-  });
+  // ── Ciel + Sol (fond 2D avec horizon correct) ──────
+  // Projeter un point très loin au niveau du sol pour trouver la ligne d'horizon
+  const farX=camX+(lkX-camX)*1000, farZ=camZ+(lkZ-camZ)*1000;
+  const farV=applyM(VIEW,[farX,0,farZ]);
+  let horizonY = CY;
+  if(farV[2]>0.1) horizonY = CY - farV[1]/farV[2]*FOCAL;
+  horizonY = Math.max(0, Math.min(H, horizonY));
+
+  // Ciel
+  const skyG=ctx.createLinearGradient(0,0,0,horizonY);
+  skyG.addColorStop(0,'#0d1e3a'); skyG.addColorStop(0.65,'#1a3a6a'); skyG.addColorStop(1,'#f5904a');
+  ctx.fillStyle=skyG; ctx.fillRect(0,0,W,horizonY);
+  // Sol de fond
+  const gndG=ctx.createLinearGradient(0,horizonY,0,H);
+  gndG.addColorStop(0,'#8ab84a'); gndG.addColorStop(1,'#4a7020');
+  ctx.fillStyle=gndG; ctx.fillRect(0,horizonY,W,H-horizonY);
 
   // Piste
   {
@@ -537,8 +547,12 @@ function drawScene(){
   // Arbres
   TREES.forEach(t=>{
     const s=t.s;
-    drawCylinder(mulM(translate(t.x,1.5,t.z),scaleM(s,s,s)),0.4,3,6,30,40,35);
-    drawCone(mulM(translate(t.x,5.5*s,t.z),scaleM(s,s,s)),2.2,5,8,115,45,35);
+    // Tronc : cylindre vertical
+    drawCylinder(mulM(translate(t.x,1.5*s,t.z),scaleM(s,s,s)),0.35,3,6,30,40,30);
+    // Feuillage : cône (pointe vers le haut = Y+), base en bas
+    // drawCone place la pointe à Y=h et la base à Y=0 en local
+    // Donc on translate à la base du cône (y du sol du feuillage)
+    drawCone(mulM(translate(t.x,3*s,t.z),scaleM(s,s,s)),2.0,4.5,8,115,50,32);
   });
 
   // Nuages
@@ -593,7 +607,6 @@ function loop(){
   const now=performance.now();
   const dt=Math.min((now-lastT)/1000,.05); lastT=now;
   if(gameRunning) update(dt);
-  drawSky();
   drawScene();
 }
 
