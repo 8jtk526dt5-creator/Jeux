@@ -212,8 +212,8 @@ function drawBox(modelM, w,h,d, hue,sat,baseLt, alpha=1){
   });
 }
 
-// Cylindre bas-poly (12 faces latérales)
-function drawCylinder(modelM, r,h,segs, hue,sat,lt){
+// Cylindre bas-poly
+function drawCylinder(modelM, r,h,segs, hue,sat,lt, alpha=1){
   const hs=h/2;
   const faces=[];
   for(let i=0;i<segs;i++){
@@ -231,7 +231,9 @@ function drawCylinder(modelM, r,h,segs, hue,sat,lt){
   faces.forEach(f=>{
     if(f.pts.some(p=>!p))return;
     const col=lightColor(f.nx,0,f.nz, hue,sat,lt);
+    ctx.globalAlpha=alpha;
     drawFace(f.pts, col, null);
+    ctx.globalAlpha=1;
   });
 }
 
@@ -271,19 +273,44 @@ function drawPlane(modelM, w,d, color){
 // Seed aléatoire déterministe
 function sr(n){ return ((Math.sin(n*127.1)*43758.5453)%1+1)%1; }
 
-// Arbres
+// Types de végétation : conifère, feuillu, palmier
 const TREES=[];
-for(let i=0;i<80;i++) TREES.push({x:(sr(i*3)-.5)*700,z:(sr(i*3+1)-.5)*700,s:.6+sr(i*3+2)*.8});
+for(let i=0;i<140;i++){
+  const type=Math.floor(sr(i*7+6)*3); // 0=conifère 1=feuillu 2=palmier
+  TREES.push({x:(sr(i*3)-.5)*900,z:(sr(i*3+1)-.5)*900,s:.5+sr(i*3+2)*.9,type});
+}
 
-// Nuages
+// Maisons/bâtiments (petits villages)
+const BUILDINGS=[];
+for(let v=0;v<6;v++){
+  const vx=(sr(v*11)-.5)*700, vz=(sr(v*11+1)-.5)*700;
+  for(let b=0;b<5+Math.floor(sr(v*11+2)*6);b++){
+    BUILDINGS.push({
+      x:vx+(sr(v*50+b*3)-.5)*60, z:vz+(sr(v*50+b*3+1)-.5)*60,
+      w:3+sr(v*50+b*3+2)*5, h:3+sr(v*50+b*3+3)*8, d:3+sr(v*50+b*3+4)*5,
+      hue:Math.floor(20+sr(v*50+b*3+5)*30), roof:sr(v*50+b*3+6)>.5
+    });
+  }
+}
+
+// Collines (quelques boîtes très aplaties pour relief au sol)
+const HILLS=[];
+for(let i=0;i<30;i++)
+  HILLS.push({x:(sr(i*9)-.5)*1200,z:(sr(i*9+1)-.5)*1200,r:20+sr(i*9+2)*60,h:4+sr(i*9+3)*12});
+
+// Nuages plus réalistes (plus gros, plus variés)
 const CLOUDS=[];
-for(let i=0;i<20;i++) CLOUDS.push({
-  x:(sr(i*5)-.5)*600, y:55+sr(i*5+1)*70, z:(sr(i*5+2)-.5)*600,
-  rx:sr(i*5+3)*.5, puffs:Array.from({length:4+Math.floor(sr(i*5+4)*3)},(_,j)=>({
-    dx:(sr(i*20+j*4)-.5)*10, dy:(sr(i*20+j*4+1)-.5)*2, dz:(sr(i*20+j*4+2)-.5)*6,
-    r:3+sr(i*20+j*4+3)*2
+for(let i=0;i<28;i++) CLOUDS.push({
+  x:(sr(i*5)-.5)*900, y:60+sr(i*5+1)*80, z:(sr(i*5+2)-.5)*900,
+  puffs:Array.from({length:5+Math.floor(sr(i*5+4)*5)},(_,j)=>({
+    dx:(sr(i*30+j*4)-.5)*14, dy:(sr(i*30+j*4+1)-.5)*3, dz:(sr(i*30+j*4+2)-.5)*8,
+    r:4+sr(i*30+j*4+3)*4
   }))
 });
+
+// Rivière (quelques segments de plans bleus)
+const RIVER=[];
+for(let i=0;i<12;i++) RIVER.push({x:-80+i*35,z:120+sr(i*7)*20-10,w:12+sr(i*7+1)*8,d:28});
 
 // Tuiles de sol
 const TILE=200, TG=5;
@@ -491,9 +518,10 @@ function recycleTiles(){
   });
 }
 function recycleDeco(){
-  const R=400;
+  const R=500;
   TREES.forEach(t=>{ if(t.x<px-R)t.x+=R*2;if(t.x>px+R)t.x-=R*2;if(t.z<pz-R)t.z+=R*2;if(t.z>pz+R)t.z-=R*2; });
-  CLOUDS.forEach(c=>{ if(c.x<px-500)c.x+=1000;if(c.x>px+500)c.x-=1000;if(c.z<pz-500)c.z+=1000;if(c.z>pz+500)c.z-=1000; });
+  BUILDINGS.forEach(b=>{ if(b.x<px-R)b.x+=R*2;if(b.x>px+R)b.x-=R*2;if(b.z<pz-R)b.z+=R*2;if(b.z>pz+R)b.z-=R*2; });
+  CLOUDS.forEach(c=>{ if(c.x<px-600)c.x+=1200;if(c.x>px+600)c.x-=1200;if(c.z<pz-600)c.z+=1200;if(c.z>pz+600)c.z-=1200; });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -513,11 +541,17 @@ function drawScene(){
 
   // Ciel
   const skyG=ctx.createLinearGradient(0,0,0,horizonY);
-  skyG.addColorStop(0,'#0d1e3a'); skyG.addColorStop(0.65,'#1a3a6a'); skyG.addColorStop(1,'#f5904a');
+  skyG.addColorStop(0,'#07122b');
+  skyG.addColorStop(0.4,'#0f2a5e');
+  skyG.addColorStop(0.8,'#2060b8');
+  skyG.addColorStop(0.93,'#f08030');
+  skyG.addColorStop(1,'#f5c060');
   ctx.fillStyle=skyG; ctx.fillRect(0,0,W,horizonY);
-  // Sol de fond
+  // Sol de fond (vert prairies)
   const gndG=ctx.createLinearGradient(0,horizonY,0,H);
-  gndG.addColorStop(0,'#8ab84a'); gndG.addColorStop(1,'#4a7020');
+  gndG.addColorStop(0,'#6a9e35');
+  gndG.addColorStop(0.4,'#5a8a28');
+  gndG.addColorStop(1,'#3d6018');
   ctx.fillStyle=gndG; ctx.fillRect(0,horizonY,W,H-horizonY);
 
   // Piste
@@ -541,59 +575,136 @@ function drawScene(){
     drawBox(mulM(translate(RWX,9.5,RWZ+RWWID/2+9),identity()),4.4,2,4.4,195,50,60,0.85);
   }
 
-  // Arbres
-  TREES.forEach(t=>{
-    const s=t.s;
-    // Tronc : cylindre vertical
-    drawCylinder(mulM(translate(t.x,1.5*s,t.z),scaleM(s,s,s)),0.35,3,6,30,40,30);
-    // Feuillage : cône (pointe vers le haut = Y+), base en bas
-    // drawCone place la pointe à Y=h et la base à Y=0 en local
-    // Donc on translate à la base du cône (y du sol du feuillage)
-    drawCone(mulM(translate(t.x,3*s,t.z),scaleM(s,s,s)),2.0,4.5,8,115,50,32);
+  // Rivière
+  RIVER.forEach(r=>{
+    drawPlane(translate(r.x,0.02,r.z),r.w,r.d,'#3a7abf');
   });
 
-  // Nuages
+  // Collines (relief sol)
+  HILLS.forEach(h=>{
+    const dist=Math.sqrt((h.x-px)**2+(h.z-pz)**2);
+    if(dist>600)return;
+    drawBox(mulM(translate(h.x,h.h/2,h.z),scaleM(1,1,1)),h.r*2,h.h,h.r*2,100,35,28,0.7);
+  });
+
+  // Bâtiments
+  BUILDINGS.forEach(b=>{
+    const dist=Math.sqrt((b.x-px)**2+(b.z-pz)**2);
+    if(dist>450)return;
+    // Murs
+    drawBox(translate(b.x,b.h/2,b.z),b.w,b.h,b.d,b.hue,30,55);
+    // Toit (rouge brique ou gris ardoise)
+    if(b.roof){
+      drawBox(translate(b.x,b.h+0.5,b.z),b.w+0.3,1,b.d+0.3,10,55,38);
+    } else {
+      drawBox(translate(b.x,b.h+0.3,b.z),b.w+0.3,0.6,b.d+0.3,220,20,40);
+    }
+    // Fenêtres (petites boîtes sombres)
+    if(b.h>5){
+      drawBox(translate(b.x,b.h*.55,b.z-b.d/2-.05),b.w*.35,b.h*.18,0.1,210,15,20,0.9);
+    }
+  });
+
+  // Arbres (3 types)
+  TREES.forEach(t=>{
+    const s=t.s;
+    const dist=Math.sqrt((t.x-px)**2+(t.z-pz)**2);
+    if(dist>420)return;
+    if(t.type===0){
+      // Conifère : tronc brun + 2 cônes superposés
+      drawCylinder(mulM(translate(t.x,1.5*s,t.z),scaleM(s*.4,s,s*.4)),0.4,3,6,25,40,28);
+      drawCone(mulM(translate(t.x,3*s,t.z),scaleM(s,s,s)),2.2,5,8,115,55,30);
+      drawCone(mulM(translate(t.x,5.5*s,t.z),scaleM(s*.7,s*.7,s*.7)),1.5,3.5,8,115,55,36);
+    } else if(t.type===1){
+      // Feuillu : tronc + sphère (cylindre aplati)
+      drawCylinder(mulM(translate(t.x,2*s,t.z),scaleM(s*.4,s,s*.4)),0.4,4,6,25,35,28);
+      drawCylinder(mulM(translate(t.x,5.5*s,t.z),scaleM(s*1.8,s*1.2,s*1.8)),1,1,10,100,45,32);
+    } else {
+      // Palmier : tronc élancé + feuilles (cônes plats)
+      drawCylinder(mulM(translate(t.x,3.5*s,t.z),scaleM(s*.3,s,s*.3)),0.3,7,6,30,30,42);
+      for(let a=0;a<6;a++){
+        const ang=a/6*Math.PI*2;
+        drawBox(mulM(translate(t.x+Math.cos(ang)*2*s,7.2*s,t.z+Math.sin(ang)*2*s),rotY(-ang)),0.3,0.15,2.5*s,100,60,32);
+      }
+    }
+  });
+
+  // Nuages volumétriques
   CLOUDS.forEach(c=>{
     c.puffs.forEach(p=>{
-      const m=mulM(translate(c.x+p.dx,c.y+p.dy,c.z+p.dz),scaleM(p.r,p.r*.55,p.r*.7));
-      drawCylinder(m,1,1,10,25,20,90);
+      const m=mulM(translate(c.x+p.dx,c.y+p.dy,c.z+p.dz),scaleM(p.r*1.4,p.r*.5,p.r));
+      drawCylinder(m,1,1,10,25,15,92,0.88);
     });
   });
 
   // ── Avion ──────────────────────────────────────────
-  // Matrice de base de l'avion (position + orientation)
   const planeBase = mulM(
     mulM(mulM(translate(px,py,pz), rotY(-yaw)), rotX(-pitch*.9)), rotZ(-roll)
   );
 
-  // Fuselage
-  drawCylinder(mulM(planeBase,mulM(rotZ(Math.PI/2),scaleM(1,1,1))),0.55,4.2,10,210,15,80);
-  // Nez/capot
-  drawCone(mulM(planeBase,mulM(translate(2.55,0,0),rotZ(-Math.PI/2))),0.55,0.9,10,210,10,65);
-  // Aile haute
-  drawBox(mulM(planeBase,translate(.1,.55,0)),0.9,.1,5.6,200,55,60);
-  // Aile basse
-  drawBox(mulM(planeBase,translate(.1,-.45,0)),0.9,.1,5.6,200,50,50);
+  // --- Fuselage principal (3 segments : arrière, milieu, avant)
+  drawCylinder(mulM(planeBase,mulM(translate(-1.4,0,0),rotZ(Math.PI/2))),0.42,2.2,12,210,15,75); // arrière
+  drawCylinder(mulM(planeBase,mulM(translate( 0.3,0,0),rotZ(Math.PI/2))),0.56,3.2,12,210,15,80); // milieu
+  drawCylinder(mulM(planeBase,mulM(translate( 2.0,0,0),rotZ(Math.PI/2))),0.48,1.4,12,210,15,78); // avant
+  // Nez arrondi
+  drawCone(mulM(planeBase,mulM(translate(2.8,0,0),rotZ(-Math.PI/2))),0.45,1.1,12,215,10,68);
+
+  // --- Cockpit vitré (bleu sombre légèrement transparent)
+  drawBox(mulM(planeBase,translate(0.9,0.42,0)),0.8,0.52,0.72,210,30,28,0.9);
+  // Bord d'attaque du cockpit (cadre métallique)
+  drawBox(mulM(planeBase,translate(1.3,0.38,0)),0.12,0.46,0.74,210,15,55);
+
+  // --- Aile principale (droite + gauche avec dièdre léger)
+  drawBox(mulM(planeBase,mulM(translate(0.1,0.1, 1.9),rotZ( 0.07))),1.1,0.14,3.6,220,60,62);
+  drawBox(mulM(planeBase,mulM(translate(0.1,0.1,-1.9),rotZ(-0.07))),1.1,0.14,3.6,220,60,62);
+  // Winglets
+  drawBox(mulM(planeBase,mulM(translate(0.1,0.52, 3.65),rotZ(0.3))),0.6,0.14,0.22,220,55,55);
+  drawBox(mulM(planeBase,mulM(translate(0.1,0.52,-3.65),rotZ(-0.3))),0.6,0.14,0.22,220,55,55);
+  // Volets (bord de fuite, légèrement plus sombres)
+  drawBox(mulM(planeBase,translate(-0.35,0.1, 1.5)),0.5,0.1,2.8,215,55,48);
+  drawBox(mulM(planeBase,translate(-0.35,0.1,-1.5)),0.5,0.1,2.8,215,55,48);
+
+  // --- Empennage horizontal
+  drawBox(mulM(planeBase,translate(-2.1,0.1, 1.1)),0.7,0.1,2.1,210,20,60);
+  drawBox(mulM(planeBase,translate(-2.1,0.1,-1.1)),0.7,0.1,2.1,210,20,60);
   // Dérive verticale
-  drawBox(mulM(planeBase,translate(-1.95,.55,0)),.06,1.0,.8,200,50,50);
-  // Stabilisateur
-  drawBox(mulM(planeBase,translate(-1.95,.05,0)),.06,.08,1.8,210,10,65);
-  // Cockpit (boîte sombre translucide)
-  drawBox(mulM(planeBase,translate(.6,.45,0)),.5,.4,.6,210,20,25,0.85);
+  drawBox(mulM(planeBase,translate(-2.0,0.7,0)),0.7,1.3,0.12,210,20,58);
+  // Gouverne de direction
+  drawBox(mulM(planeBase,translate(-2.5,0.6,0)),0.5,1.0,0.1,210,15,45);
 
-  // Hélice (2 pales tournantes)
-  const pa=propAngle;
-  const pBase=mulM(planeBase,translate(3.05,0,0));
-  const b1=mulM(pBase,rotX(pa));
-  const b2=mulM(pBase,rotX(pa+Math.PI/2));
-  drawBox(b1,.06,1.1,.12,0,0,15);
-  drawBox(b2,.06,1.1,.12,0,0,15);
-
-  // Train d'atterrissage
-  [-0.9,0.9].forEach(z=>{
-    drawBox(mulM(planeBase,translate(.3,-.75,z)),.08,.5,.08,0,0,35);
-    drawCylinder(mulM(planeBase,mulM(translate(.3,-1.0,z),rotX(Math.PI/2))),.18,.14,8,0,0,20);
+  // --- Moteurs (2 nacelles sous les ailes)
+  [-1.5,1.5].forEach(z=>{
+    drawCylinder(mulM(planeBase,mulM(translate(0.2,-0.28,z),rotZ(Math.PI/2))),0.28,1.4,10,30,15,42);
+    drawCone(mulM(planeBase,mulM(translate(0.98,-0.28,z),rotZ(-Math.PI/2))),0.28,0.4,10,30,10,55);
+    // Pylône moteur
+    drawBox(mulM(planeBase,translate(0.2,-0.1,z)),0.9,0.26,0.18,210,10,45);
   });
+
+  // --- Hélices (4 pales par moteur)
+  const pa=propAngle;
+  [-1.5,1.5].forEach((z,mi)=>{
+    const pBase=mulM(planeBase,translate(1.0,-0.28,z));
+    for(let i=0;i<4;i++){
+      const ang=pa+(mi*.3)+i*Math.PI/2;
+      drawBox(mulM(pBase,rotX(ang)),0.08,1.3,0.18,0,0,22);
+    }
+    // Spinner
+    drawCone(mulM(pBase,rotZ(-Math.PI/2)),0.14,0.3,8,0,0,45);
+  });
+
+  // --- Train d'atterrissage (3 points)
+  [-1.0,1.0].forEach(z=>{
+    drawBox(mulM(planeBase,translate(0.4,-0.62,z)),0.08,0.62,0.08,0,0,32);
+    drawCylinder(mulM(planeBase,mulM(translate(0.4,-0.95,z),rotX(Math.PI/2))),0.2,0.18,8,0,0,22);
+  });
+  // Roulette de nez
+  drawBox(mulM(planeBase,translate(2.1,-0.5,0)),0.08,0.5,0.08,0,0,32);
+  drawCylinder(mulM(planeBase,mulM(translate(2.1,-0.78,0),rotX(Math.PI/2))),0.14,0.14,8,0,0,22);
+
+  // --- Feux de navigation (petits cubes colorés)
+  drawBox(mulM(planeBase,translate(0.1,0.1, 3.72)),0.15,0.15,0.15,0,100,65);  // vert droite
+  drawBox(mulM(planeBase,translate(0.1,0.1,-3.72)),0.15,0.15,0.15,0,100,65);  // rouge gauche
+  drawBox(mulM(planeBase,translate(-2.0,1.4,0)),0.12,0.12,0.12,0,0,90);       // blanc queue
 }
 
 // ═══════════════════════════════════════════════════════
