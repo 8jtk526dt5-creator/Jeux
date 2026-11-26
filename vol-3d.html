@@ -315,17 +315,19 @@ for(let i=0;i<TG;i++)for(let j=0;j<TG;j++)
 // ═══════════════════════════════════════════════════════
 // VOL
 // ═══════════════════════════════════════════════════════
-let px=0,py=40,pz=0,pitch=0,roll=0,yaw=0,speed=28;
+// Démarrage loin des villes (Paris est à 0,0 — on part à l'opposé)
+let px=-300,py=60,pz=-300,pitch=0,roll=0,yaw=Math.PI*.25,speed=28;
 const MIN_SPD=12,MAX_SPD=60;
-let vertSpd=0,prevPY=40;
-let camX=0,camY=44,camZ=-12,lkX=0,lkY=40,lkZ=0;
+let vertSpd=0,prevPY=60;
+let camX=px-10*Math.cos(Math.PI*.25),camY=py+3.5,camZ=pz-10*Math.sin(Math.PI*.25);
+let lkX=px+5*Math.cos(Math.PI*.25),lkY=py+.5,lkZ=pz+5*Math.sin(Math.PI*.25);
 let propAngle=0;
 let gameRunning=true,totalDist=0,crashed=false,lastT=performance.now();
 let stabActive=false;
 
 // Piste cible (ville la plus proche)
 let targetAirport=AIRPORTS[0];
-const LV=6,LP=14,LA=22,LL=8,APPR=500;
+const LV=6,LP=14,LA=22,LL=8,APPR=300;
 let inApproach=false,landDone=false,beepT=0;
 
 const CMsgs={
@@ -512,8 +514,10 @@ function doEnd(ok,cat){
 }
 
 function resetFlight(){
-  px=0;py=40;pz=0;pitch=0;roll=0;yaw=0;speed=28;
-  totalDist=0;vertSpd=0;prevPY=40;crashed=false;landDone=false;
+  px=-300;py=60;pz=-300;pitch=0;roll=0;yaw=Math.PI*.25;speed=28;
+  totalDist=0;vertSpd=0;prevPY=60;crashed=false;landDone=false;
+  camX=px-10*Math.cos(Math.PI*.25);camY=py+3.5;camZ=pz-10*Math.sin(Math.PI*.25);
+  lkX=px+5*Math.cos(Math.PI*.25);lkY=py+.5;lkZ=pz+5*Math.sin(Math.PI*.25);
   inApproach=false;beepT=0;gameRunning=true;
   document.getElementById('result').style.display='none';
   document.getElementById('banner').style.display='none';
