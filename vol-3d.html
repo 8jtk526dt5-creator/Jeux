@@ -319,8 +319,9 @@ for(let i=0;i<TG;i++)for(let j=0;j<TG;j++)
 let px=-300,py=60,pz=-300,pitch=0,roll=0,yaw=Math.PI*.25,speed=28;
 const MIN_SPD=12,MAX_SPD=60;
 let vertSpd=0,prevPY=60;
-let camX=px-10*Math.cos(Math.PI*.25),camY=py+3.5,camZ=pz-10*Math.sin(Math.PI*.25);
-let lkX=px+5*Math.cos(Math.PI*.25),lkY=py+.5,lkZ=pz+5*Math.sin(Math.PI*.25);
+// Caméra 18u derrière, 5u au-dessus — assure que l'avion est visible dès le départ
+let camX=px-18*Math.cos(Math.PI*.25),camY=py+5,camZ=pz-18*Math.sin(Math.PI*.25);
+let lkX=px+8*Math.cos(Math.PI*.25),lkY=py+1,lkZ=pz+8*Math.sin(Math.PI*.25);
 let propAngle=0;
 let gameRunning=true,totalDist=0,crashed=false,lastT=performance.now();
 let stabActive=false;
@@ -448,14 +449,14 @@ function update(dt){
   py=Math.min(py,350);
   propAngle+=dt*speed*1.8;
 
-  // Caméra souple derrière l'avion
-  const ox=-10*Math.cos(yaw),oz=-10*Math.sin(yaw);
+  // Caméra souple derrière l'avion — recul 18u, hauteur 5u
+  const ox=-18*Math.cos(yaw),oz=-18*Math.sin(yaw);
   camX+=(px+ox-camX)*Math.min(1,dt*3.5);
-  camY+=(py+3.5-camY)*Math.min(1,dt*3.5);
+  camY+=(py+5-camY)*Math.min(1,dt*3.5);
   camZ+=(pz+oz-camZ)*Math.min(1,dt*3.5);
-  lkX+=(px+5*Math.cos(yaw)-lkX)*Math.min(1,dt*3.5);
-  lkY+=(py+.5-lkY)*Math.min(1,dt*3.5);
-  lkZ+=(pz+5*Math.sin(yaw)-lkZ)*Math.min(1,dt*3.5);
+  lkX+=(px+8*Math.cos(yaw)-lkX)*Math.min(1,dt*3.5);
+  lkY+=(py+1-lkY)*Math.min(1,dt*3.5);
+  lkZ+=(pz+8*Math.sin(yaw)-lkZ)*Math.min(1,dt*3.5);
 
   updateHUD(dt);
   recycleTiles();
@@ -516,8 +517,8 @@ function doEnd(ok,cat){
 function resetFlight(){
   px=-300;py=60;pz=-300;pitch=0;roll=0;yaw=Math.PI*.25;speed=28;
   totalDist=0;vertSpd=0;prevPY=60;crashed=false;landDone=false;
-  camX=px-10*Math.cos(Math.PI*.25);camY=py+3.5;camZ=pz-10*Math.sin(Math.PI*.25);
-  lkX=px+5*Math.cos(Math.PI*.25);lkY=py+.5;lkZ=pz+5*Math.sin(Math.PI*.25);
+  camX=px-18*Math.cos(Math.PI*.25);camY=py+5;camZ=pz-18*Math.sin(Math.PI*.25);
+  lkX=px+8*Math.cos(Math.PI*.25);lkY=py+1;lkZ=pz+8*Math.sin(Math.PI*.25);
   inApproach=false;beepT=0;gameRunning=true;
   document.getElementById('result').style.display='none';
   document.getElementById('banner').style.display='none';
@@ -731,73 +732,69 @@ function drawScene(){
   });
 
   // ── AVION ─────────────────────────────────────────────
+  // S=2.5 : avion agrandi pour être bien visible depuis la caméra
+  const S=2.5;
   const planeBase=mulM(mulM(mulM(translate(px,py,pz),rotY(-yaw)),rotX(-pitch*.9)),rotZ(-roll));
+  const pb=m=>mulM(planeBase,m);
 
-  // Fuselage (3 cylindres coniques)
-  drawCylinder(mulM(planeBase,mulM(translate(-1.6,0,0),rotZ(Math.PI/2))),0.38,2.6,12,215,12,72);
-  drawCylinder(mulM(planeBase,mulM(translate(0.2,0,0),rotZ(Math.PI/2))),0.56,3.6,12,215,12,80);
-  drawCylinder(mulM(planeBase,mulM(translate(2.1,0,0),rotZ(Math.PI/2))),0.44,1.6,12,215,12,76);
+  // Fuselage (3 cylindres)
+  drawCylinder(pb(mulM(translate(-1.6*S,0,0),rotZ(Math.PI/2))),0.38*S,2.6*S,12,215,12,72);
+  drawCylinder(pb(mulM(translate(0.2*S,0,0),rotZ(Math.PI/2))),0.56*S,3.6*S,12,215,12,80);
+  drawCylinder(pb(mulM(translate(2.1*S,0,0),rotZ(Math.PI/2))),0.44*S,1.6*S,12,215,12,76);
   // Nez
-  drawCone(mulM(planeBase,mulM(translate(3.0,0,0),rotZ(-Math.PI/2))),0.42,1.2,12,220,8,65);
-  // Jonction queue–fuselage (effilage)
-  drawCone(mulM(planeBase,mulM(translate(-2.9,0,0),rotZ(Math.PI/2))),0.32,1.0,10,215,10,62);
+  drawCone(pb(mulM(translate(3.0*S,0,0),rotZ(-Math.PI/2))),0.42*S,1.2*S,12,220,8,65);
+  // Queue effilée
+  drawCone(pb(mulM(translate(-2.9*S,0,0),rotZ(Math.PI/2))),0.32*S,1.0*S,10,215,10,62);
 
   // Cockpit
-  drawBox(mulM(planeBase,translate(0.9,0.44,0)),1.0,.56,.78,210,35,26,.92);
-  drawBox(mulM(planeBase,translate(1.4,0.40,0)),.14,.48,.80,210,15,52);
+  drawBox(pb(translate(0.9*S,0.44*S,0)),1.0*S,.56*S,.78*S,210,35,26,.92);
 
-  // Ailes principales avec dièdre
-  drawBox(mulM(planeBase,mulM(translate(0.1,.12,2.0),rotZ(.06))),1.2,.13,4.0,222,58,60);
-  drawBox(mulM(planeBase,mulM(translate(0.1,.12,-2.0),rotZ(-.06))),1.2,.13,4.0,222,58,60);
+  // Ailes principales
+  drawBox(pb(mulM(translate(0.1*S,.12*S,2.0*S),rotZ(.06))),1.2*S,.18*S,4.0*S,222,58,60);
+  drawBox(pb(mulM(translate(0.1*S,.12*S,-2.0*S),rotZ(-.06))),1.2*S,.18*S,4.0*S,222,58,60);
   // Winglets
-  drawBox(mulM(planeBase,mulM(translate(0.1,.58,3.9),rotZ(.28))),0.65,.13,.24,222,52,52);
-  drawBox(mulM(planeBase,mulM(translate(0.1,.58,-3.9),rotZ(-.28))),0.65,.13,.24,222,52,52);
+  drawBox(pb(mulM(translate(0.1*S,.58*S,3.9*S),rotZ(.28))),0.65*S,.18*S,.3*S,222,52,52);
+  drawBox(pb(mulM(translate(0.1*S,.58*S,-3.9*S),rotZ(-.28))),0.65*S,.18*S,.3*S,222,52,52);
   // Volets
-  drawBox(mulM(planeBase,translate(-.38,.12,1.6)),.52,.10,3.0,218,52,46);
-  drawBox(mulM(planeBase,translate(-.38,.12,-1.6)),.52,.10,3.0,218,52,46);
+  drawBox(pb(translate(-.38*S,.12*S,1.6*S)),.52*S,.14*S,3.0*S,218,52,46);
+  drawBox(pb(translate(-.38*S,.12*S,-1.6*S)),.52*S,.14*S,3.0*S,218,52,46);
 
   // Empennage horizontal
-  drawBox(mulM(planeBase,translate(-2.3,.12,1.2)),.75,.10,2.3,215,18,58);
-  drawBox(mulM(planeBase,translate(-2.3,.12,-1.2)),.75,.10,2.3,215,18,58);
-  // Dérive
-  drawBox(mulM(planeBase,translate(-2.1,.78,0)),.8,1.4,.12,215,18,55);
-  // Gouverne
-  drawBox(mulM(planeBase,translate(-2.65,.65,0)),.55,1.1,.10,215,15,42);
+  drawBox(pb(translate(-2.3*S,.12*S,1.2*S)),.75*S,.14*S,2.3*S,215,18,58);
+  drawBox(pb(translate(-2.3*S,.12*S,-1.2*S)),.75*S,.14*S,2.3*S,215,18,58);
+  // Dérive verticale
+  drawBox(pb(translate(-2.1*S,.78*S,0)),.8*S,1.4*S,.18*S,215,18,55);
+  drawBox(pb(translate(-2.65*S,.65*S,0)),.55*S,1.1*S,.14*S,215,15,42);
 
   // 2 Moteurs
-  [-1.65,1.65].forEach(z=>{
-    drawCylinder(mulM(planeBase,mulM(translate(0.2,-.30,z),rotZ(Math.PI/2))),.30,1.6,10,28,12,40);
-    drawCone(mulM(planeBase,mulM(translate(1.1,-.30,z),rotZ(-Math.PI/2))),.30,.45,10,28,10,52);
-    // Pylône
-    drawBox(mulM(planeBase,translate(0.2,-.10,z)),.95,.28,.20,210,10,42);
-    // Entrée d'air (anneau sombre)
-    drawCylinder(mulM(planeBase,mulM(translate(-.68,-.30,z),rotZ(Math.PI/2))),.32,.12,10,0,0,15);
+  [-1.65*S,1.65*S].forEach(z=>{
+    drawCylinder(pb(mulM(translate(0.2*S,-.30*S,z),rotZ(Math.PI/2))),.30*S,1.6*S,10,28,12,40);
+    drawCone(pb(mulM(translate(1.1*S,-.30*S,z),rotZ(-Math.PI/2))),.30*S,.45*S,10,28,10,52);
+    drawBox(pb(translate(0.2*S,-.10*S,z)),.95*S,.28*S,.24*S,210,10,42);
   });
 
-  // Hélices (4 pales, 2 moteurs)
+  // Hélices
   const pa=propAngle;
-  [-1.65,1.65].forEach((z,mi)=>{
-    const pB=mulM(planeBase,translate(1.12,-.30,z));
+  [-1.65*S,1.65*S].forEach((z,mi)=>{
+    const pB=pb(translate(1.12*S,-.30*S,z));
     for(let i=0;i<4;i++){
       const ang=pa+(mi*.4)+i*Math.PI/2;
-      drawBox(mulM(pB,rotX(ang)),.09,1.4,.22,0,0,20);
+      drawBox(mulM(pB,rotX(ang)),.12*S,1.4*S,.28*S,0,0,20);
     }
-    drawCone(mulM(pB,rotZ(-Math.PI/2)),.15,.35,8,0,0,42);
   });
 
-  // Train d'atterrissage principal
-  [-1.1,1.1].forEach(z=>{
-    drawBox(mulM(planeBase,translate(.4,-.65,z)),.09,.7,.09,0,0,30);
-    drawCylinder(mulM(planeBase,mulM(translate(.4,-.98,z),rotX(Math.PI/2))),.22,.20,8,0,0,20);
+  // Train d'atterrissage
+  [-1.1*S,1.1*S].forEach(z=>{
+    drawBox(pb(translate(.4*S,-.65*S,z)),.12*S,.7*S,.12*S,0,0,30);
+    drawCylinder(pb(mulM(translate(.4*S,-.98*S,z),rotX(Math.PI/2))),.22*S,.24*S,8,0,0,20);
   });
-  // Nez
-  drawBox(mulM(planeBase,translate(2.2,-.52,0)),.09,.52,.09,0,0,30);
-  drawCylinder(mulM(planeBase,mulM(translate(2.2,-.82,0),rotX(Math.PI/2))),.15,.15,8,0,0,20);
+  drawBox(pb(translate(2.2*S,-.52*S,0)),.12*S,.52*S,.12*S,0,0,30);
+  drawCylinder(pb(mulM(translate(2.2*S,-.82*S,0),rotX(Math.PI/2))),.18*S,.18*S,8,0,0,20);
 
   // Feux de navigation
-  drawBox(mulM(planeBase,translate(0.1,.12,3.98)),.16,.16,.16,120,100,55); // vert droite
-  drawBox(mulM(planeBase,translate(0.1,.12,-3.98)),.16,.16,.16,0,100,55);  // rouge gauche
-  drawBox(mulM(planeBase,translate(-2.1,1.5,0)),.13,.13,.13,0,0,88);       // blanc queue
+  drawBox(pb(translate(0.1*S,.12*S,3.98*S)),.22*S,.22*S,.22*S,120,100,55);
+  drawBox(pb(translate(0.1*S,.12*S,-3.98*S)),.22*S,.22*S,.22*S,0,100,55);
+  drawBox(pb(translate(-2.1*S,1.5*S,0)),.18*S,.18*S,.18*S,0,0,88);
 }
 
 // ═══════════════════════════════════════════════════════
