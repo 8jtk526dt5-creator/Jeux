@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Vol 3D</title>
+<title>Vol 3D v9</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none}
@@ -14,10 +14,12 @@ canvas{display:block;width:100%;height:100%}
 .hp{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 14px;color:#fff}
 .hl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;opacity:.55}
 .hv{font-size:19px;font-weight:700}
-#comp{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px}
-#carr{font-size:24px;color:#ffd24f;line-height:1}
+#comp{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:3px}
+#comprose{width:72px;height:72px;position:relative}
+#comprose canvas{width:72px;height:72px;display:block}
 #cdist{font-size:11px;background:rgba(0,0,0,.55);color:#fff;padding:1px 10px;border-radius:20px}
 #cname{font-size:11px;color:#ffd24f;margin-top:1px;display:none}
+#ahCanvas{position:absolute;top:52px;left:10px;width:80px;height:80px;pointer-events:none}
 /* Approche */
 #appr{display:none;position:absolute;top:80px;right:10px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 14px;color:#fff;font-size:11px;min-width:170px}
 #appr .at{font-size:9px;text-transform:uppercase;letter-spacing:.08em;opacity:.55;margin-bottom:3px}
@@ -50,12 +52,14 @@ canvas{display:block;width:100%;height:100%}
     <div class="hp"><div class="hl">Altitude</div><div class="hv" id="hAlt">0 m</div></div>
     <div class="hp" style="text-align:right"><div class="hl">Vitesse</div><div class="hv" id="hSpd">0 km/h</div></div>
   </div>
-  <div id="comp"><div id="carr">➤</div><div id="cdist">—</div><div id="cname"></div></div>
+  <div id="comp"><div id="comprose"><canvas id="compassCv" width="72" height="72"></canvas></div><div id="cdist">—</div><div id="cname"></div></div>
+  <canvas id="ahCanvas" width="80" height="80"></canvas>
   <div id="mute">🔊</div>
-  <div id="appr"><div class="at">✈ Approche</div>
+  <div id="appr"><div class="at">✈ ILS / Approche</div>
     <div class="ar"><span>Descente</span><span id="aVS">—</span></div>
     <div class="ar"><span>Assiette</span><span id="aPT">—</span></div>
     <div class="ar"><span>Axe piste</span><span id="aAL">—</span></div>
+    <div class="ar"><span>Pente idéale</span><span id="aGS">—</span></div>
   </div>
   <div id="stabbar">✈ Stabilisateur actif</div>
   <div id="res">
@@ -321,6 +325,25 @@ const HILLS=Array.from({length:35},(_,i)=>({
   r:20+sr(i*9+2)*60,h:4+sr(i*9+3)*14
 }));
 
+// Routes entre villes (segments)
+const ROADS=[];
+for(let i=0;i<CITIES.length;i++){
+  for(let j=i+1;j<CITIES.length;j++){
+    const a=CITIES[i],b=CITIES[j];
+    const dist2=Math.hypot(a.x-b.x,a.z-b.z);
+    if(dist2<900)ROADS.push({ax:a.x,az:a.z,bx:b.x,bz:b.z});
+  }
+}
+
+// Champs colorés (patches de sol)
+const FIELDS=Array.from({length:80},(_,i)=>({
+  x:(sr(i*11)-.5)*1800, z:(sr(i*11+1)-.5)*1800,
+  w:30+sr(i*11+2)*80, d:25+sr(i*11+3)*70,
+  hue:60+sr(i*11+4)*80|0, // jaune→vert
+  sat:40+sr(i*11+5)*35|0,
+  lit:28+sr(i*11+6)*20|0
+}));
+
 // ════════════════════════════════════════════════════════
 //  ÉTAT DU VOL
 // ════════════════════════════════════════════════════════
@@ -553,6 +576,10 @@ function update(dt){
     setI('aVS',(-vspd*3).toFixed(1)+' m/s',Math.abs(vspd)<=LV);
     setI('aPT',(pitch*180/Math.PI).toFixed(1)+'°',Math.abs(pitch*180/Math.PI)<=LP);
     setI('aAL',al2.toFixed(1)+'°',al2<=LA);
+    const dist5=Math.hypot(nc2.rwX-px,nc2.rwZ-pz);
+    const idealAlt=dist5*0.052;
+    const gsErr=py-idealAlt;
+    setI('aGS',gsErr>5?'↑ Trop haut':gsErr<-5?'↓ Trop bas':'✓ Bon axe',Math.abs(gsErr)<=15);
   }
 }
 
@@ -575,6 +602,27 @@ function drawAirport(c){
     const lz=c.rwZ-c.cos*(c.RWLEN/2-5)+c.sin*j*2.5;
     quad(mMul(mT(lx,.04,lz),mRY(-c.hdg)),5,.7,'#e8c820');
   }
+  // Bande de dégagement jaune seuil
+  quad(mMul(mT(c.rwX-c.sin*(c.RWLEN/2+3),.03,c.rwZ-c.cos*(c.RWLEN/2+3)),mRY(-c.hdg)),8,c.RWWID,'#605000');
+  // Taxiway (chemin gris vers le tarmac)
+  quad(mMul(mT(c.rwX+c.cos*(c.RWWID/2+6),.02,c.rwZ-c.sin*(c.RWWID/2+6)),mRY(-c.hdg)),30,6,'#1e2226');
+  // Feux PAPI (4 feux rouges/blancs au seuil d'approche, côté gauche de piste)
+  for(let j=0;j<4;j++){
+    const fx=c.rwX-c.sin*(c.RWLEN/2-8)+c.cos*(c.RWWID/2+3+j*2.8);
+    const fz=c.rwZ-c.cos*(c.RWLEN/2-8)-c.sin*(c.RWWID/2+3+j*2.8);
+    // couleur PAPI : on calcule le bon angle de planeur ≈3°
+    // Ici on dessine juste les boîtiers (les vrais signaux lumineux seraient dans drawScene)
+    box(mT(fx,.3,fz),.8,.5,.8,0,0,15);
+    // Feu lumineux (toujours blanc pour simplifier, rouge si py/dist_horiz < tan(3°)≈0.052)
+    const papiOn=proj(fx,.5,fz);
+    if(papiOn){
+      const dist3=Math.hypot(fx-px,fz-pz);
+      const idealY=dist3*0.052; // 3° glidepath
+      const isRed=py<idealY*.7;
+      cx.save();cx.beginPath();cx.arc(papiOn[0],papiOn[1],3,0,Math.PI*2);
+      cx.fillStyle=isRed?'#ff4400':'#fffde0';cx.shadowColor=isRed?'#ff4400':'#ffffc0';cx.shadowBlur=8;cx.fill();cx.restore();
+    }
+  }
   // Tour de contrôle
   const tcx=c.rwX+c.cos*(c.RWWID/2+10),tcz=c.rwZ-c.sin*(c.RWWID/2+10);
   cyl(mMul(mT(tcx,5,tcz),mRY(0)),1.2,10,8,42,22,52);
@@ -584,6 +632,12 @@ function drawAirport(c){
   const hz=c.rwZ-c.cos*(c.RWLEN/2-12)+c.sin*(c.RWWID/2+16);
   box(mMul(mT(hx,5,hz),mRY(-c.hdg)),28,10,18,210,14,42);
   box(mMul(mT(hx,10.8,hz),mRY(-c.hdg)),28,2,18,210,10,34);
+  // Marquage du nom de ville
+  const npt=proj(c.x,0.1,c.z);
+  if(npt&&Math.hypot(c.x-px,c.z-pz)<400){
+    cx.save();cx.font='bold 11px system-ui';cx.fillStyle='rgba(255,220,80,0.7)';
+    cx.textAlign='center';cx.fillText(c.name,npt[0],npt[1]);cx.restore();
+  }
 }
 
 function drawCity(c,ci){
@@ -726,6 +780,54 @@ function drawScene(){
   }
   cx.globalAlpha=1;
 
+  // Champs colorés (patches sol)
+  FIELDS.forEach(f=>{
+    if(Math.hypot(f.x-px,f.z-pz)>600)return;
+    quad(mT(f.x,.01,f.z),f.w,f.d,`hsl(${f.hue},${f.sat}%,${f.lit}%)`,0.7);
+  });
+
+  // Routes entre villes
+  ROADS.forEach(r=>{
+    if(Math.hypot((r.ax+r.bx)/2-px,(r.az+r.bz)/2-pz)>900)return;
+    // Dessiner en segments
+    const segs=12;
+    for(let i=0;i<segs;i++){
+      const t0=i/segs,t1=(i+1)/segs;
+      const x0=r.ax+(r.bx-r.ax)*t0,z0=r.az+(r.bz-r.az)*t0;
+      const x1=r.ax+(r.bx-r.ax)*t1,z1=r.az+(r.bz-r.az)*t1;
+      const p0=proj(x0,.05,z0),p1=proj(x1,.05,z1);
+      if(!p0||!p1)continue;
+      cx.beginPath();cx.moveTo(p0[0],p0[1]);cx.lineTo(p1[0],p1[1]);
+      cx.strokeStyle='rgba(140,120,80,0.6)';cx.lineWidth=1.5;cx.stroke();
+    }
+  });
+
+  // Anneau d'approche autour de l'aéroport cible (si en approche)
+  if(apprOpen){
+    const {c:nc2}=nearestCity();
+    const ringR=60;
+    let prevP=null;
+    for(let a=0;a<=36;a++){
+      const ag=a/36*Math.PI*2;
+      const rx=nc2.rwX+Math.cos(ag)*ringR,rz=nc2.rwZ+Math.sin(ag)*ringR;
+      const rp=proj(rx,.1,rz);
+      if(rp&&prevP){
+        cx.beginPath();cx.moveTo(prevP[0],prevP[1]);cx.lineTo(rp[0],rp[1]);
+        cx.strokeStyle='rgba(255,220,0,0.4)';cx.lineWidth=1;cx.stroke();
+      }
+      prevP=rp;
+    }
+    // Flèche directionnelle vers piste
+    const ap=proj(nc2.rwX,2,nc2.rwZ);
+    if(ap){
+      cx.save();
+      cx.translate(ap[0],ap[1]);
+      cx.font='bold 14px system-ui';cx.fillStyle='rgba(255,220,0,0.9)';
+      cx.textAlign='center';cx.fillText('▼',0,0);
+      cx.restore();
+    }
+  }
+
   // Collines
   HILLS.forEach(h=>{
     if(Math.hypot(h.x-px,h.z-pz)>700)return;
@@ -751,6 +853,115 @@ function drawScene(){
 
   // Avion
   drawPlane();
+
+  // ── Horizon artificiel (HUD) ─────────────────────────
+  drawAH();
+
+  // ── Boussole rose ────────────────────────────────────
+  drawCompass();
+}
+
+// ════════════════════════════════════════════════════════
+//  HUD INSTRUMENTAUX
+// ════════════════════════════════════════════════════════
+
+// Boussole rose des vents
+const compassCv=document.getElementById('compassCv');
+const compassCtx=compassCv.getContext('2d');
+function drawCompass(){
+  const cc=compassCtx,r=36,cx2=36,cy2=36;
+  cc.clearRect(0,0,72,72);
+  // Fond
+  cc.beginPath();cc.arc(cx2,cy2,r,0,Math.PI*2);
+  cc.fillStyle='rgba(0,0,0,0.6)';cc.fill();
+  cc.strokeStyle='rgba(255,255,255,0.15)';cc.lineWidth=1;cc.stroke();
+  // Degrés (graduation légère)
+  const headingDeg=(yaw*180/Math.PI+360)%360;
+  cc.save();cc.translate(cx2,cy2);cc.rotate(-headingDeg*Math.PI/180);
+  // Graduations tous les 30°
+  for(let d=0;d<360;d+=30){
+    const a=d*Math.PI/180;
+    const inner=d%90===0?26:28,outer=33;
+    cc.beginPath();cc.moveTo(Math.sin(a)*inner,Math.cos(a)*inner);cc.lineTo(Math.sin(a)*outer,Math.cos(a)*outer);
+    cc.strokeStyle=d%90===0?'rgba(255,200,80,0.8)':'rgba(255,255,255,0.3)';cc.lineWidth=d%90===0?1.5:0.7;cc.stroke();
+  }
+  // Lettres cardinales
+  cc.font='bold 10px system-ui';cc.textAlign='center';cc.textBaseline='middle';
+  [['N',0,'#ff5050'],['E',90,'#fff'],['S',180,'#fff'],['O',270,'#fff']].forEach(([l,d,col])=>{
+    const a=d*Math.PI/180,dist=19;
+    cc.fillStyle=col;cc.fillText(l,Math.sin(a)*dist,-Math.cos(a)*dist);
+  });
+  cc.restore();
+  // Flèche de cap courante (fixe, pointe vers le haut)
+  cc.beginPath();cc.moveTo(cx2,cy2-32);cc.lineTo(cx2-4,cy2-24);cc.lineTo(cx2+4,cy2-24);cc.closePath();
+  cc.fillStyle='#ff5050';cc.fill();
+  // Flèche vers aéroport cible
+  const {c:nc,d:nd}=nearestCity();
+  const dx2=nc.rwX-px,dz2=nc.rwZ-pz;
+  const angToAirport=Math.atan2(dx2,dz2)-yaw;
+  cc.save();cc.translate(cx2,cy2);cc.rotate(angToAirport);
+  cc.beginPath();cc.moveTo(0,-27);cc.lineTo(-3,-20);cc.lineTo(3,-20);cc.closePath();
+  cc.fillStyle='rgba(255,220,80,0.9)';cc.fill();
+  cc.restore();
+  // Distance au centre
+  cc.font='bold 7px system-ui';cc.textAlign='center';cc.textBaseline='middle';
+  cc.fillStyle='rgba(255,220,80,0.8)';
+  cc.fillText(Math.round(nd*3)+'m',cx2,cy2);
+}
+
+// Horizon artificiel
+const ahCv=document.getElementById('ahCanvas');
+const ahCtx=ahCv.getContext('2d');
+function drawAH(){
+  const c2=ahCtx,r=38,cx2=40,cy2=40;
+  c2.clearRect(0,0,80,80);
+  c2.save();
+  // Clip circulaire
+  c2.beginPath();c2.arc(cx2,cy2,r,0,Math.PI*2);c2.clip();
+  // Fond (horizon artificiel)
+  c2.save();c2.translate(cx2,cy2);c2.rotate(-roll);
+  // Sol brun / ciel bleu
+  const pitchPx=pitch*180*r/60; // pixels par radian
+  c2.fillStyle='#1a4d8f';c2.fillRect(-r,-r-pitchPx,r*2,r*2);
+  c2.fillStyle='#5a3a10';c2.fillRect(-r,-pitchPx,r*2,r*2);
+  // Ligne horizon
+  c2.strokeStyle='#fff';c2.lineWidth=1.5;
+  c2.beginPath();c2.moveTo(-r,-pitchPx);c2.lineTo(r,-pitchPx);c2.stroke();
+  c2.restore();
+  // Avion au centre (repère fixe)
+  c2.strokeStyle='#fff';c2.lineWidth=2;
+  c2.beginPath();c2.moveTo(cx2-14,cy2);c2.lineTo(cx2-6,cy2);c2.lineTo(cx2-6,cy2-4);c2.stroke();
+  c2.beginPath();c2.moveTo(cx2+14,cy2);c2.lineTo(cx2+6,cy2);c2.lineTo(cx2+6,cy2-4);c2.stroke();
+  c2.beginPath();c2.moveTo(cx2,cy2-3);c2.lineTo(cx2,cy2+3);c2.stroke();
+  c2.restore();
+  // Bordure
+  c2.beginPath();c2.arc(cx2,cy2,r,0,Math.PI*2);
+  c2.strokeStyle='rgba(255,255,255,0.3)';c2.lineWidth=1.5;c2.stroke();
+  // Indicateur ILS (si en approche) : barres verticale (axe) et horizontale (pente)
+  if(apprOpen){
+    const {c:nc}=nearestCity();
+    // Déviation latérale (axe piste)
+    const dx3=nc.rwX-px,dz3=nc.rwZ-pz;
+    const along=dx3*nc.sin+dz3*nc.cos;
+    const lat=(-dx3*nc.cos+dz3*nc.sin);
+    const latDev=Math.max(-1,Math.min(1,lat/40));
+    // Déviation verticale (glidepath 3°)
+    const dist4=Math.hypot(dx3,dz3);
+    const idealY=dist4*0.052;
+    const vertDev=Math.max(-1,Math.min(1,(py-idealY)/20));
+    // Cercles de référence
+    c2.strokeStyle='rgba(255,255,255,0.4)';c2.lineWidth=1;
+    c2.beginPath();c2.arc(cx2,cy2,8,0,Math.PI*2);c2.stroke();
+    // Barre verticale (déviation axe piste) — se déplace horizontalement
+    const barX=cx2+latDev*24;
+    c2.strokeStyle='#4eff4e';c2.lineWidth=2;
+    c2.beginPath();c2.moveTo(barX,cy2-14);c2.lineTo(barX,cy2+14);c2.stroke();
+    // Barre horizontale (glidepath) — se déplace verticalement
+    const barY=cy2-vertDev*20;
+    c2.beginPath();c2.moveTo(cx2-14,barY);c2.lineTo(cx2+14,barY);c2.stroke();
+    // Repère avion (fixe)
+    c2.fillStyle='#4eff4e';c2.beginPath();c2.arc(cx2,cy2,3,0,Math.PI*2);c2.fill();
+  }
 }
 
 // ════════════════════════════════════════════════════════
