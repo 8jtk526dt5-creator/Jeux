@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Vol 3D</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>Vol 3D v8</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;font-family:system-ui,Arial,sans-serif}
@@ -109,18 +111,24 @@ function applyM(m,[x,y,z]){
   return[(m[0]*x+m[4]*y+m[8]*z+m[12])/w,(m[1]*x+m[5]*y+m[9]*z+m[13])/w,(m[2]*x+m[6]*y+m[10]*z+m[14])/w];
 }
 
-// LookAt : Z+ = devant caméra
+// LookAt standard : forward=normalize(target-eye), right=cross(forward,worldUp), up=cross(right,forward)
 function buildView(ex,ey,ez,cx,cy,cz){
+  // forward
   let fx=cx-ex,fy=cy-ey,fz=cz-ez;
   const fl=Math.sqrt(fx*fx+fy*fy+fz*fz)||1;fx/=fl;fy/=fl;fz/=fl;
+  // right = forward × worldUp(0,1,0)
   let rx=fz,ry=0,rz=-fx;
   const rl=Math.sqrt(rx*rx+rz*rz)||1;rx/=rl;rz/=rl;
-  const ux=fy*rz-fz*ry,uy=fz*rx-fx*rz,uz=fx*ry-fy*rx;
+  // up = right × forward
+  const ux=ry*fz-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy-ry*fx;
+  // Matrice view : transforme world→camera
+  // col-major : m[col*4+row]
   const m=m4();
-  m[0]=rx;m[4]=ry;m[8]=rz;m[12]=-(rx*ex+ry*ey+rz*ez);
-  m[1]=ux;m[5]=uy;m[9]=uz;m[13]=-(ux*ex+uy*ey+uz*ez);
-  m[2]=fx;m[6]=fy;m[10]=fz;m[14]=-(fx*ex+fy*ey+fz*ez);
-  m[15]=1;return m;
+  m[0]=rx; m[4]=ux; m[8] =fx; m[12]=-(rx*ex+ux*ey+fx*ez);
+  m[1]=ry; m[5]=uy; m[9] =fy; m[13]=-(ry*ex+uy*ey+fy*ez);
+  m[2]=rz; m[6]=uz; m[10]=fz; m[14]=-(rz*ex+uz*ey+fz*ez);
+  m[15]=1;
+  return m;
 }
 function project([x,y,z]){
   if(z<=0.1)return null;
