@@ -326,6 +326,8 @@ const HILLS=Array.from({length:35},(_,i)=>({
 // ════════════════════════════════════════════════════════
 let px,py,pz,pitch,roll,yaw,speed,vspd,prevY,dist,alive,propA;
 let camTX,camTY,camTZ,lkTX,lkTY,lkTZ; // positions cibles caméra
+// Déclarées ici pour être accessibles dans reset()
+let apprOpen=false,landDone=false,apprTimer=0;
 function reset(){
   // Départ au-dessus du vide, loin des villes, en vol stabilisé
   px=-350;py=80;pz=-350;
@@ -417,7 +419,6 @@ function crash(){
 //  ATTERRISSAGE
 // ════════════════════════════════════════════════════════
 const LV=5,LP=12,LA=20,LL=7,APPR=280;
-let apprOpen=false,landDone=false,apprTimer=0;
 const OK_MSG=["Posé comme une plume !","Atterrissage parfait !","Les passagers n'ont rien senti.","Douceur et précision."];
 const BAD={hors:"Tu as raté la piste.",vit:"Trop brusque — réduis la descente.",pitch:"Nez trop bas à l'atterrissage.",align:"Mauvais alignement avec la piste.",sol:"Ce n'était pas la piste !"};
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
