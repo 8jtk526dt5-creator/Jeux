@@ -149,26 +149,36 @@ function drawBox(modelM,w,h,d,hue,sat,lt,alpha=1){
   const hw=w/2,hh=h/2,hd=d/2;
   const v=[[-hw,-hh,-hd],[hw,-hh,-hd],[hw,hh,-hd],[-hw,hh,-hd],
            [-hw,-hh,hd],[hw,-hh,hd],[hw,hh,hd],[-hw,hh,hd]];
-  const faces=[{i:[0,1,2,3],n:[0,0,-1]},{i:[5,4,7,6],n:[0,0,1]},
-               {i:[1,5,6,2],n:[1,0,0]},{i:[4,0,3,7],n:[-1,0,0]},
-               {i:[3,2,6,7],n:[0,1,0]},{i:[4,5,1,0],n:[0,-1,0]}];
+  // normales en coords monde (transformées par modelM sans translation)
+  const facesDef=[
+    {i:[0,1,2,3],wn:[0,0,-1]},{i:[5,4,7,6],wn:[0,0,1]},
+    {i:[1,5,6,2],wn:[1,0,0]},{i:[4,0,3,7],wn:[-1,0,0]},
+    {i:[3,2,6,7],wn:[0,1,0]},{i:[4,5,1,0],wn:[0,-1,0]}];
   const vw=v.map(p=>applyM(modelM,p));
   const vv=vw.map(p=>applyM(VIEW,p));
   const vs=vv.map(p=>project(p));
+  // Centre de la boîte en coords monde (pour calcul vue→objet)
+  const cx=modelM[12],cy=modelM[13],cz=modelM[14];
   const toRender=[];
-  faces.forEach(f=>{
+  facesDef.forEach(f=>{
     const pts=f.i.map(i=>vs[i]);
     if(pts.some(p=>!p))return;
-    const a=vv[f.i[0]],b=vv[f.i[1]],c=vv[f.i[2]];
-    const nz=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
-    if(nz>=0)return;
+    // Normale monde = appliquer rotation du modèle à wn
+    const nx=modelM[0]*f.wn[0]+modelM[4]*f.wn[1]+modelM[8]*f.wn[2];
+    const ny=modelM[1]*f.wn[0]+modelM[5]*f.wn[1]+modelM[9]*f.wn[2];
+    const nz=modelM[2]*f.wn[0]+modelM[6]*f.wn[1]+modelM[10]*f.wn[2];
+    // Vecteur centre→camera
+    const vcx=camX-cx,vcy=camY-cy,vcz=camZ-cz;
+    if(nx*vcx+ny*vcy+nz*vcz<0)return; // face dos à la caméra
     const depth=(pts[0][2]+pts[1][2]+pts[2][2]+pts[3][2])/4;
-    toRender.push({pts,depth,n:f.n});
+    // Lumière avec normale monde
+    const ll=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+    toRender.push({pts,depth,nx:nx/ll,ny:ny/ll,nz:nz/ll});
   });
   toRender.sort((a,b)=>b.depth-a.depth);
   toRender.forEach(f=>{
     ctx.globalAlpha=alpha;
-    drawFace(f.pts,lightColor(f.n[0],f.n[1],f.n[2],hue,sat,lt),
+    drawFace(f.pts,lightColor(f.nx,f.ny,f.nz,hue,sat,lt),
       `hsl(${hue},${sat}%,${Math.round(lt*.55)}%)`);
     ctx.globalAlpha=1;
   });
