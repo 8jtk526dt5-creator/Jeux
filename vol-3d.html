@@ -555,9 +555,6 @@ function update(dt){
   document.getElementById('hSpd').textContent=Math.round(speed*6)+' km/h';
 
   const {c:nc2,d:nd}=nearestCity();
-  const dx2=nc2.rwX-px,dz2=nc2.rwZ-pz;
-  const ang=Math.atan2(dx2,dz2)-yaw;
-  document.getElementById('carr').style.transform=`rotate(${ang*180/Math.PI}deg)`;
   document.getElementById('cdist').textContent=Math.round(nd*3)+' m';
   const cnEl=document.getElementById('cname');
   if(nd<250){cnEl.textContent='✈ '+nc2.name;cnEl.style.display='block';}
