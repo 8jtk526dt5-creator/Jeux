@@ -741,11 +741,13 @@ function drawScene(){
     });
   });
 
-  // ── AVION ─────────────────────────────────────────────
-  // Dessiner un point de repère à la position exacte de l'avion
+  // ── DEBUG ─────────────────────────────────────────────
   {
-    const pv=project(applyM(VIEW,[px,py,pz]));
-    if(pv){ctx.fillStyle='#f00';ctx.beginPath();ctx.arc(pv[0],pv[1],18,0,Math.PI*2);ctx.fill();}
+    const vc=applyM(VIEW,[px,py,pz]);
+    document.title=`z=${vc[2].toFixed(1)} cam=(${camX.toFixed(0)},${camY.toFixed(0)},${camZ.toFixed(0)}) lk=(${lkX.toFixed(0)},${lkY.toFixed(0)},${lkZ.toFixed(0)}) av=(${px.toFixed(0)},${py.toFixed(0)},${pz.toFixed(0)})`;
+    const pv=project(vc);
+    if(pv){ctx.fillStyle='#f00';ctx.beginPath();ctx.arc(pv[0],pv[1],30,0,Math.PI*2);ctx.fill();}
+    else{ctx.fillStyle='#f00';ctx.font='bold 20px sans-serif';ctx.fillText('AVION HORS CHAMP z='+vc[2].toFixed(2),20,200);}
   }
   const S=2.5;
   const planeBase=mulM(mulM(mulM(translate(px,py,pz),rotY(-yaw)),rotX(-pitch*.9)),rotZ(-roll));
