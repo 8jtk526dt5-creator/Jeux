@@ -742,7 +742,11 @@ function drawScene(){
   });
 
   // ── AVION ─────────────────────────────────────────────
-  // S=2.5 : avion agrandi pour être bien visible depuis la caméra
+  // Dessiner un point de repère à la position exacte de l'avion
+  {
+    const pv=project(applyM(VIEW,[px,py,pz]));
+    if(pv){ctx.fillStyle='#f00';ctx.beginPath();ctx.arc(pv[0],pv[1],18,0,Math.PI*2);ctx.fill();}
+  }
   const S=2.5;
   const planeBase=mulM(mulM(mulM(translate(px,py,pz),rotY(-yaw)),rotX(-pitch*.9)),rotZ(-roll));
   const pb=m=>mulM(planeBase,m);
