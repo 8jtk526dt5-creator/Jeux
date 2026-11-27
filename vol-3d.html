@@ -2,833 +2,763 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<title>Vol 3D v8</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Vol 3D</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;font-family:system-ui,Arial,sans-serif}
-  canvas{display:block}
-  #ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-  #hud{position:absolute;top:12px;left:0;width:100%;display:flex;justify-content:space-between;padding:0 14px}
-  .panel{background:rgba(0,0,0,.5);border-radius:10px;padding:7px 13px;color:#fff;font-size:11px;line-height:1.6;border:1px solid rgba(255,255,255,.08)}
-  .pv{font-size:17px;font-weight:700}
-  #compass{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px}
-  #carr{font-size:22px;color:#ffd24f;filter:drop-shadow(0 0 4px #fa0);transition:transform .1s}
-  #cdist{font-size:11px;background:rgba(0,0,0,.5);color:#fff;padding:1px 8px;border-radius:20px}
-  #cityName{position:absolute;top:68px;left:50%;transform:translateX(-50%);font-size:12px;color:#ffd24f;background:rgba(0,0,0,.45);padding:2px 10px;border-radius:12px;display:none}
-  #lhud{display:none;position:absolute;top:88px;right:12px;background:rgba(0,0,0,.55);border-radius:10px;padding:9px 13px;color:#fff;font-size:11px;min-width:175px;line-height:1.9;border:1px solid rgba(255,255,255,.08)}
-  #lhud .lt{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:2px}
-  #lhud .row{display:flex;justify-content:space-between;gap:8px}
-  .ok{color:#7effa0;font-weight:700}.bad{color:#ff7878;font-weight:700}
-  #stabHud{position:absolute;bottom:95px;left:50%;transform:translateX(-50%);background:rgba(0,120,255,.25);border:1px solid rgba(100,180,255,.4);border-radius:10px;padding:4px 14px;color:#adf;font-size:11px;display:none}
-  #banner{display:none;position:absolute;top:36%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:22px;font-weight:700;text-align:center;text-shadow:0 2px 10px rgba(255,140,40,.9)}
-  #result{display:none;position:absolute;inset:0;background:rgba(0,0,0,.82);flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px;pointer-events:all}
-  #result h1{font-size:34px;margin-bottom:10px}
-  #rmsg{font-size:15px;max-width:340px;line-height:1.5;margin-bottom:5px}
-  #rsub{font-size:12px;opacity:.6;margin-bottom:20px}
-  #rbtn{padding:12px 26px;font-size:15px;font-weight:700;background:linear-gradient(135deg,#ff9d44,#ffd24f);border:none;border-radius:50px;cursor:pointer;color:#1a0a00}
-  #hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);color:rgba(255,220,160,.65);font-size:10px;text-align:center;line-height:1.7}
-  /* Boutons tactiles */
-  #tctl{display:none;position:absolute;inset:0;pointer-events:none}
-  .tb{position:absolute;pointer-events:all;width:68px;height:68px;border-radius:50%;background:rgba(255,180,80,.13);border:1.5px solid rgba(255,180,80,.32);display:flex;align-items:center;justify-content:center;font-size:20px;color:rgba(255,220,160,.82);user-select:none;-webkit-user-select:none}
-  .tb.on{background:rgba(255,180,80,.38);border-color:#ffb850}
-  #tU{left:16px;bottom:106px}#tD{left:16px;bottom:28px}
-  #tL{right:106px;bottom:28px}#tR{right:28px;bottom:28px}
-  #tStab{left:50%;transform:translateX(-50%);bottom:28px;width:80px;height:40px;border-radius:20px;font-size:13px;font-weight:700;color:#adf;border-color:rgba(100,180,255,.5);background:rgba(0,100,255,.15)}
-  #tStab.on{background:rgba(0,120,255,.4);border-color:#6af}
-  #muteBtn{position:absolute;top:12px;left:50%;margin-left:58px;pointer-events:all;background:rgba(0,0,0,.4);border:1px solid rgba(255,200,100,.2);border-radius:50%;width:32px;height:32px;cursor:pointer;color:#ffd24f;font-size:14px;display:flex;align-items:center;justify-content:center}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none}
+canvas{display:block;width:100%;height:100%}
+#ui{position:fixed;inset:0;pointer-events:none;font-family:system-ui,sans-serif}
+/* HUD */
+#hud{position:absolute;top:10px;left:0;width:100%;display:flex;justify-content:space-between;padding:0 12px}
+.hp{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 14px;color:#fff}
+.hl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;opacity:.55}
+.hv{font-size:19px;font-weight:700}
+#comp{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px}
+#carr{font-size:24px;color:#ffd24f;line-height:1}
+#cdist{font-size:11px;background:rgba(0,0,0,.55);color:#fff;padding:1px 10px;border-radius:20px}
+#cname{font-size:11px;color:#ffd24f;margin-top:1px;display:none}
+/* Approche */
+#appr{display:none;position:absolute;top:80px;right:10px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 14px;color:#fff;font-size:11px;min-width:170px}
+#appr .at{font-size:9px;text-transform:uppercase;letter-spacing:.08em;opacity:.55;margin-bottom:3px}
+#appr .ar{display:flex;justify-content:space-between;gap:8px;line-height:2}
+.ok{color:#7effa0;font-weight:700}.bad{color:#ff7878;font-weight:700}
+/* Stab */
+#stabbar{display:none;position:absolute;bottom:110px;left:50%;transform:translateX(-50%);background:rgba(0,100,255,.25);border:1px solid rgba(100,180,255,.4);border-radius:8px;padding:3px 14px;color:#adf;font-size:11px}
+/* Résultat */
+#res{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px;pointer-events:all}
+#res h1{font-size:32px;margin-bottom:12px}
+#res p{font-size:14px;max-width:320px;line-height:1.6;margin-bottom:6px;opacity:.85}
+#res small{font-size:11px;opacity:.45;margin-bottom:20px}
+#res button{padding:12px 28px;font-size:15px;font-weight:700;background:linear-gradient(135deg,#ff9d44,#ffd24f);border:none;border-radius:50px;cursor:pointer;color:#1a0a00}
+/* Boutons tactiles */
+#tpad{display:none;position:fixed;inset:0;pointer-events:none}
+.tb{position:absolute;pointer-events:all;width:70px;height:70px;border-radius:50%;background:rgba(255,180,60,.1);border:1.5px solid rgba(255,180,60,.3);display:flex;align-items:center;justify-content:center;font-size:22px;color:rgba(255,220,120,.8);user-select:none;-webkit-user-select:none;touch-action:none}
+.tb.on{background:rgba(255,180,60,.35);border-color:#ffb840}
+#tU{left:14px;bottom:108px}#tD{left:14px;bottom:30px}
+#tL{right:108px;bottom:30px}#tR{right:30px;bottom:30px}
+#tS{left:50%;transform:translateX(-50%);bottom:30px;width:76px;height:38px;border-radius:19px;font-size:12px;font-weight:700;color:#adf;border-color:rgba(100,180,255,.4);background:rgba(0,80,220,.12)}
+#tS.on{background:rgba(0,120,255,.4);border-color:#6af}
+#mute{position:absolute;top:10px;left:50%;margin-left:60px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,200,80,.2);cursor:pointer;pointer-events:all;font-size:14px;display:flex;align-items:center;justify-content:center;color:#ffd24f}
+#hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(255,200,100,.5);white-space:nowrap}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="ui">
   <div id="hud">
-    <div class="panel">
-      <div style="opacity:.6;font-size:10px;text-transform:uppercase;letter-spacing:.06em">Altitude</div>
-      <div class="pv" id="altV">0 m</div>
-    </div>
-    <div class="panel" style="text-align:right">
-      <div style="opacity:.6;font-size:10px;text-transform:uppercase;letter-spacing:.06em">Vitesse</div>
-      <div class="pv" id="spdV">0 km/h</div>
-    </div>
+    <div class="hp"><div class="hl">Altitude</div><div class="hv" id="hAlt">0 m</div></div>
+    <div class="hp" style="text-align:right"><div class="hl">Vitesse</div><div class="hv" id="hSpd">0 km/h</div></div>
   </div>
-  <button id="muteBtn">🔊</button>
-  <div id="compass"><div id="carr">➤</div><div id="cdist">— m</div></div>
-  <div id="cityName"></div>
-  <div id="stabHud">✈ Stabilisateur actif</div>
-  <div id="lhud">
-    <div class="lt">✈ Approche finale</div>
-    <div class="row"><span>Taux descente</span><span id="lvs">—</span></div>
-    <div class="row"><span>Assiette</span><span id="lpt">—</span></div>
-    <div class="row"><span>Axe piste</span><span id="lal">—</span></div>
+  <div id="comp"><div id="carr">➤</div><div id="cdist">—</div><div id="cname"></div></div>
+  <div id="mute">🔊</div>
+  <div id="appr"><div class="at">✈ Approche</div>
+    <div class="ar"><span>Descente</span><span id="aVS">—</span></div>
+    <div class="ar"><span>Assiette</span><span id="aPT">—</span></div>
+    <div class="ar"><span>Axe piste</span><span id="aAL">—</span></div>
   </div>
-  <div id="banner"></div>
-  <div id="result">
-    <h1 id="rtitle">—</h1>
-    <div id="rmsg"></div><div id="rsub"></div>
-    <button id="rbtn">Redécoller ✈</button>
+  <div id="stabbar">✈ Stabilisateur actif</div>
+  <div id="res">
+    <h1 id="rTitle">—</h1><p id="rMsg"></p><small id="rSub"></small>
+    <button onclick="reset()">Redécoller ✈</button>
   </div>
-  <div id="tctl">
-    <div class="tb" id="tU">▲</div>
-    <div class="tb" id="tD">▼</div>
-    <div class="tb" id="tL">◀</div>
-    <div class="tb" id="tR">▶</div>
-    <div class="tb" id="tStab">STAB</div>
+  <div id="tpad">
+    <div class="tb" id="tU">▲</div><div class="tb" id="tD">▼</div>
+    <div class="tb" id="tL">◀</div><div class="tb" id="tR">▶</div>
+    <div class="tb" id="tS">STAB</div>
   </div>
-  <div id="hint">↑/↓ cabrer·piquer &nbsp;•&nbsp; ←/→ virer &nbsp;•&nbsp; Shift accélérer &nbsp;•&nbsp; S stabiliser</div>
+  <div id="hint">↑↓ cabrer/piquer · ←→ virer · Shift accélérer · S stabiliser</div>
 </div>
-
 <script>
-// ═══════════════════════════════════════════════════════
-// MOTEUR 3D — CANVAS 2D + PROJECTION PERSPECTIVE
-// ═══════════════════════════════════════════════════════
-const canvas=document.getElementById('c');
-const ctx=canvas.getContext('2d');
-let W,H,CX,CY,FOCAL;
+'use strict';
+// ════════════════════════════════════════════════════════
+//  CANVAS & PROJECTION
+// ════════════════════════════════════════════════════════
+const cv=document.getElementById('c'),cx=cv.getContext('2d');
+let W,H,CX,CY,FL; // FL = focal length en pixels
 function resize(){
-  W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;
-  CX=W/2; CY=H/2; FOCAL=Math.min(W,H)*0.9;
+  W=cv.width=window.innerWidth; H=cv.height=window.innerHeight;
+  CX=W/2; CY=H/2; FL=Math.min(W,H)*1.1;
 }
-resize(); window.addEventListener('resize',resize);
+resize(); addEventListener('resize',resize);
 
-// ── Matrices 4×4 col-major ────────────────────────────
-function m4(){return new Float32Array(16);}
-function identity(){const m=m4();m[0]=m[5]=m[10]=m[15]=1;return m;}
-function mulM(a,b){
-  const o=m4();
-  for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[r+k*4]*b[k+c*4];o[r+c*4]=s;}
-  return o;
-}
-function translate(tx,ty,tz){const m=identity();m[12]=tx;m[13]=ty;m[14]=tz;return m;}
-function scaleM(sx,sy,sz){const m=identity();m[0]=sx;m[5]=sy;m[10]=sz;return m;}
-function rotX(a){const m=identity(),c=Math.cos(a),s=Math.sin(a);m[5]=c;m[6]=s;m[9]=-s;m[10]=c;return m;}
-function rotY(a){const m=identity(),c=Math.cos(a),s=Math.sin(a);m[0]=c;m[2]=-s;m[8]=s;m[10]=c;return m;}
-function rotZ(a){const m=identity(),c=Math.cos(a),s=Math.sin(a);m[0]=c;m[1]=s;m[4]=-s;m[5]=c;return m;}
-function applyM(m,[x,y,z]){
-  const w=m[3]*x+m[7]*y+m[11]*z+m[15];
-  return[(m[0]*x+m[4]*y+m[8]*z+m[12])/w,(m[1]*x+m[5]*y+m[9]*z+m[13])/w,(m[2]*x+m[6]*y+m[10]*z+m[14])/w];
-}
+// ── Vecteurs 3D ──────────────────────────────────────
+const v3=(x,y,z)=>({x,y,z});
+const vadd=(a,b)=>v3(a.x+b.x,a.y+b.y,a.z+b.z);
+const vsub=(a,b)=>v3(a.x-b.x,a.y-b.y,a.z-b.z);
+const vscale=(a,s)=>v3(a.x*s,a.y*s,a.z*s);
+const vdot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
+const vcross=(a,b)=>v3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);
+const vnorm=(a)=>{const l=Math.sqrt(vdot(a,a))||1;return vscale(a,1/l);};
+const vlen=(a)=>Math.sqrt(vdot(a,a));
 
-// LookAt standard : forward=normalize(target-eye), right=cross(forward,worldUp), up=cross(right,forward)
-function buildView(ex,ey,ez,cx,cy,cz){
-  // forward
-  let fx=cx-ex,fy=cy-ey,fz=cz-ez;
-  const fl=Math.sqrt(fx*fx+fy*fy+fz*fz)||1;fx/=fl;fy/=fl;fz/=fl;
-  // right = forward × worldUp(0,1,0)
-  let rx=fz,ry=0,rz=-fx;
-  const rl=Math.sqrt(rx*rx+rz*rz)||1;rx/=rl;rz/=rl;
-  // up = right × forward
-  const ux=ry*fz-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy-ry*fx;
-  // Matrice view : transforme world→camera
-  // col-major : m[col*4+row]
-  const m=m4();
-  m[0]=rx; m[4]=ux; m[8] =fx; m[12]=-(rx*ex+ux*ey+fx*ez);
-  m[1]=ry; m[5]=uy; m[9] =fy; m[13]=-(ry*ex+uy*ey+fy*ez);
-  m[2]=rz; m[6]=uz; m[10]=fz; m[14]=-(rz*ex+uz*ey+fz*ez);
-  m[15]=1;
-  return m;
-}
-function project([x,y,z]){
-  if(z<=0.1)return null;
-  return[CX+x/z*FOCAL,CY-y/z*FOCAL,z];
-}
-
-// ── Rendu ─────────────────────────────────────────────
-function drawFace(pts,fill,stroke){
-  if(pts.some(p=>!p))return;
-  ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
-  for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);
-  ctx.closePath();
-  if(fill){ctx.fillStyle=fill;ctx.fill();}
-  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=0.7;ctx.stroke();}
-}
-
-const SUN=(()=>{const v=[0.55,0.75,0.35];const l=Math.sqrt(v[0]**2+v[1]**2+v[2]**2);return v.map(x=>x/l);})();
-function lightColor(nx,ny,nz,H,S,L){
-  const d=Math.max(0,nx*SUN[0]+ny*SUN[1]+nz*SUN[2]);
-  return`hsl(${H},${S}%,${Math.round(L*.42+L*.58*d)}%)`;
-}
-
-let VIEW=identity();
-
-function drawBox(modelM,w,h,d,hue,sat,lt,alpha=1){
-  const hw=w/2,hh=h/2,hd=d/2;
-  const v=[[-hw,-hh,-hd],[hw,-hh,-hd],[hw,hh,-hd],[-hw,hh,-hd],
-           [-hw,-hh,hd],[hw,-hh,hd],[hw,hh,hd],[-hw,hh,hd]];
-  // normales en coords monde (transformées par modelM sans translation)
-  const facesDef=[
-    {i:[0,1,2,3],wn:[0,0,-1]},{i:[5,4,7,6],wn:[0,0,1]},
-    {i:[1,5,6,2],wn:[1,0,0]},{i:[4,0,3,7],wn:[-1,0,0]},
-    {i:[3,2,6,7],wn:[0,1,0]},{i:[4,5,1,0],wn:[0,-1,0]}];
-  const vw=v.map(p=>applyM(modelM,p));
-  const vv=vw.map(p=>applyM(VIEW,p));
-  const vs=vv.map(p=>project(p));
-  // Centre de la boîte en coords monde (pour calcul vue→objet)
-  const cx=modelM[12],cy=modelM[13],cz=modelM[14];
-  const toRender=[];
-  facesDef.forEach(f=>{
-    const pts=f.i.map(i=>vs[i]);
-    if(pts.some(p=>!p))return;
-    // Normale monde = appliquer rotation du modèle à wn
-    const nx=modelM[0]*f.wn[0]+modelM[4]*f.wn[1]+modelM[8]*f.wn[2];
-    const ny=modelM[1]*f.wn[0]+modelM[5]*f.wn[1]+modelM[9]*f.wn[2];
-    const nz=modelM[2]*f.wn[0]+modelM[6]*f.wn[1]+modelM[10]*f.wn[2];
-    // Vecteur centre→camera
-    const vcx=camX-cx,vcy=camY-cy,vcz=camZ-cz;
-    if(nx*vcx+ny*vcy+nz*vcz<0)return; // face dos à la caméra
-    const depth=(pts[0][2]+pts[1][2]+pts[2][2]+pts[3][2])/4;
-    // Lumière avec normale monde
-    const ll=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
-    toRender.push({pts,depth,nx:nx/ll,ny:ny/ll,nz:nz/ll});
-  });
-  toRender.sort((a,b)=>b.depth-a.depth);
-  toRender.forEach(f=>{
-    ctx.globalAlpha=alpha;
-    drawFace(f.pts,lightColor(f.nx,f.ny,f.nz,hue,sat,lt),
-      `hsl(${hue},${sat}%,${Math.round(lt*.55)}%)`);
-    ctx.globalAlpha=1;
-  });
-}
-
-function drawCylinder(modelM,r,h,segs,hue,sat,lt,alpha=1){
-  const hs=h/2,faces=[];
-  for(let i=0;i<segs;i++){
-    const a0=i/segs*Math.PI*2,a1=(i+1)/segs*Math.PI*2;
-    const c0=Math.cos(a0),s0=Math.sin(a0),c1=Math.cos(a1),s1=Math.sin(a1);
-    const p0=applyM(VIEW,applyM(modelM,[c0*r,-hs,s0*r]));
-    const p1=applyM(VIEW,applyM(modelM,[c0*r,hs,s0*r]));
-    const p2=applyM(VIEW,applyM(modelM,[c1*r,hs,s1*r]));
-    const p3=applyM(VIEW,applyM(modelM,[c1*r,-hs,s1*r]));
-    faces.push({pts:[project(p0),project(p1),project(p2),project(p3)],
-      depth:(p0[2]+p1[2]+p2[2]+p3[2])/4,nx:(c0+c1)/2,nz:(s0+s1)/2});
+// ── Matrice 4×4 row-major (m[row][col]) ──────────────
+// On stocke dans un tableau plat row-major : m[r*4+c]
+function mI(){return[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1];}
+function mMul(A,B){
+  const R=new Array(16);
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+    let s=0;for(let k=0;k<4;k++)s+=A[r*4+k]*B[k*4+c];
+    R[r*4+c]=s;
   }
-  faces.sort((a,b)=>b.depth-a.depth);
-  faces.forEach(f=>{
-    if(f.pts.some(p=>!p))return;
-    ctx.globalAlpha=alpha;
-    drawFace(f.pts,lightColor(f.nx,0,f.nz,hue,sat,lt),null);
-    ctx.globalAlpha=1;
+  return R;
+}
+// Applique matrice 4×4 à point 3D (w=1 implicite)
+function mPt(M,[x,y,z]){
+  const w=M[12]*x+M[13]*y+M[14]*z+M[15];
+  return[(M[0]*x+M[1]*y+M[2]*z+M[3])/w,
+         (M[4]*x+M[5]*y+M[6]*z+M[7])/w,
+         (M[8]*x+M[9]*y+M[10]*z+M[11])/w];
+}
+// Translation
+function mT(tx,ty,tz){return[1,0,0,tx, 0,1,0,ty, 0,0,1,tz, 0,0,0,1];}
+// Rotation Y (lacet)
+function mRY(a){const c=Math.cos(a),s=Math.sin(a);return[c,0,s,0, 0,1,0,0, -s,0,c,0, 0,0,0,1];}
+// Rotation X (tangage)
+function mRX(a){const c=Math.cos(a),s=Math.sin(a);return[1,0,0,0, 0,c,-s,0, 0,s,c,0, 0,0,0,1];}
+// Rotation Z (roulis)
+function mRZ(a){const c=Math.cos(a),s=Math.sin(a);return[c,-s,0,0, s,c,0,0, 0,0,1,0, 0,0,0,1];}
+// Échelle
+function mS(sx,sy,sz){return[sx,0,0,0, 0,sy,0,0, 0,0,sz,0, 0,0,0,1];}
+
+// ── Caméra LookAt ────────────────────────────────────
+// Produit une matrice VIEW qui transforme world→camera
+// Convention : Z camera = vers l'avant (direction de vue)
+// X camera = droite, Y camera = haut
+let VIEW=[]; // matrice 4×4 courante
+let CAM=v3(0,50,-20); // position caméra monde
+let TAR=v3(0,45,0);   // point visé
+
+function buildView(){
+  const f=vnorm(vsub(TAR,CAM));       // forward
+  const r=vnorm(vcross(f,v3(0,1,0))); // right = forward×up_world
+  const u=vcross(r,f);                 // up = right×forward
+  // Matrice row-major : lignes = axes caméra
+  // Translation : -dot(axe, eye)
+  VIEW=[
+    r.x,  r.y,  r.z,  -vdot(r,CAM),
+    u.x,  u.y,  u.z,  -vdot(u,CAM),
+    f.x,  f.y,  f.z,  -vdot(f,CAM),
+    0,    0,    0,    1
+  ];
+}
+
+// Projette un point monde → pixel écran [sx, sy, z_cam]
+// Retourne null si derrière la caméra
+function proj(wx,wy,wz){
+  const [cx2,cy2,cz2]=mPt(VIEW,[wx,wy,wz]);
+  if(cz2<0.5)return null;
+  return[CX+cx2/cz2*FL, CY-cy2/cz2*FL, cz2];
+}
+
+// ── Lumière ──────────────────────────────────────────
+const SUN=vnorm(v3(0.6,0.9,0.5));
+function shade(nx,ny,nz,h,s,l){
+  const d=Math.max(0,nx*SUN.x+ny*SUN.y+nz*SUN.z);
+  return`hsl(${h},${s}%,${Math.round(l*(0.38+0.62*d))}%)`;
+}
+
+// ════════════════════════════════════════════════════════
+//  PRIMITIVES DE RENDU
+// ════════════════════════════════════════════════════════
+
+// Dessin d'un polygone 2D
+function poly(pts2,fill,stroke){
+  cx.beginPath();
+  cx.moveTo(pts2[0][0],pts2[0][1]);
+  for(let i=1;i<pts2.length;i++)cx.lineTo(pts2[i][0],pts2[i][1]);
+  cx.closePath();
+  if(fill){cx.fillStyle=fill;cx.fill();}
+  if(stroke){cx.strokeStyle=stroke;cx.lineWidth=.6;cx.stroke();}
+}
+
+// Box centrée en origine, transformée par M (world matrix 4×4)
+// w=largeur X, h=hauteur Y, d=profondeur Z, hue/sat/lit pour couleur
+function box(M,w,h,d,hue,sat,lit,alpha){
+  alpha=alpha??1;
+  const hx=w/2,hy=h/2,hz=d/2;
+  // 8 sommets locaux → monde
+  const V=[
+    [-hx,-hy,-hz],[hx,-hy,-hz],[hx,hy,-hz],[-hx,hy,-hz],
+    [-hx,-hy,hz],[hx,-hy,hz],[hx,hy,hz],[-hx,hy,hz]
+  ].map(p=>mPt(M,p));
+  // Projeter en 2D
+  const P=V.map(([x,y,z])=>proj(x,y,z));
+  // 6 faces : indices + normale locale
+  const F=[
+    {v:[0,1,2,3],n:[0,0,-1]},{v:[5,4,7,6],n:[0,0,1]},
+    {v:[1,5,6,2],n:[1,0,0]},{v:[4,0,3,7],n:[-1,0,0]},
+    {v:[3,2,6,7],n:[0,1,0]},{v:[4,5,1,0],n:[0,-1,0]}
+  ];
+  // Extraire rotation de M pour transformer normales
+  const toDraw=[];
+  F.forEach(f=>{
+    const pts=f.v.map(i=>P[i]);
+    if(pts.some(p=>!p))return;
+    // Normale monde = M rotée (ignorer translation = colonnes 0-2 de M)
+    const nx=M[0]*f.n[0]+M[1]*f.n[1]+M[2]*f.n[2];
+    const ny=M[4]*f.n[0]+M[5]*f.n[1]+M[6]*f.n[2];
+    const nz=M[8]*f.n[0]+M[9]*f.n[1]+M[10]*f.n[2];
+    // Dot avec vecteur vers caméra depuis centre de la face
+    const wx=V[f.v[0]][0],wy=V[f.v[0]][1],wz=V[f.v[0]][2];
+    const dot=(CAM.x-wx)*nx+(CAM.y-wy)*ny+(CAM.z-wz)*nz;
+    if(dot<=0)return; // face cachée
+    const depth=(pts[0][2]+pts[1][2]+pts[2][2]+pts[3][2])/4;
+    toDraw.push({pts,depth,nx,ny,nz});
+  });
+  toDraw.sort((a,b)=>b.depth-a.depth);
+  toDraw.forEach(f=>{
+    cx.globalAlpha=alpha;
+    poly(f.pts,shade(f.nx,f.ny,f.nz,hue,sat,lit),`hsl(${hue},${sat}%,${Math.round(lit*.4)}%)`);
+    cx.globalAlpha=1;
   });
 }
 
-function drawCone(modelM,r,h,segs,hue,sat,lt){
+// Cylindre axe Y, rayon r, hauteur h
+function cyl(M,r,h,segs,hue,sat,lit,alpha){
+  alpha=alpha??1;
+  const hy=h/2;
   const faces=[];
   for(let i=0;i<segs;i++){
     const a0=i/segs*Math.PI*2,a1=(i+1)/segs*Math.PI*2;
     const c0=Math.cos(a0),s0=Math.sin(a0),c1=Math.cos(a1),s1=Math.sin(a1);
-    const tip=applyM(VIEW,applyM(modelM,[0,h,0]));
-    const b0=applyM(VIEW,applyM(modelM,[c0*r,0,s0*r]));
-    const b1=applyM(VIEW,applyM(modelM,[c1*r,0,s1*r]));
-    faces.push({pts:[project(tip),project(b0),project(b1)],
-      depth:(tip[2]+b0[2]+b1[2])/3,nx:(c0+c1)/2,nz:(s0+s1)/2});
+    // 4 points monde
+    const p=[
+      mPt(M,[c0*r,-hy,s0*r]),mPt(M,[c1*r,-hy,s1*r]),
+      mPt(M,[c1*r, hy,s1*r]),mPt(M,[c0*r, hy,s0*r])
+    ];
+    const pts=p.map(([x,y,z])=>proj(x,y,z));
+    if(pts.some(q=>!q))continue;
+    // normale monde de ce quad (milieu des deux angles)
+    const am=(a0+a1)/2;
+    const lnx=Math.cos(am),lnz=Math.sin(am); // locale xz
+    const nx=M[0]*lnx+M[2]*lnz;
+    const ny=M[4]*lnx+M[6]*lnz;
+    const nz=M[8]*lnx+M[10]*lnz;
+    const dot=(CAM.x-p[0][0])*nx+(CAM.y-p[0][1])*ny+(CAM.z-p[0][2])*nz;
+    if(dot<=0)continue;
+    const depth=(pts[0][2]+pts[1][2]+pts[2][2]+pts[3][2])/4;
+    faces.push({pts,depth,nx,ny,nz});
   }
   faces.sort((a,b)=>b.depth-a.depth);
   faces.forEach(f=>{
-    if(f.pts.some(p=>!p))return;
-    drawFace(f.pts,lightColor(f.nx,.3,f.nz,hue,sat,lt),null);
+    cx.globalAlpha=alpha;
+    poly(f.pts,shade(f.nx,f.ny,f.nz,hue,sat,lit),null);
+    cx.globalAlpha=1;
   });
 }
 
-function drawPlane(modelM,w,d,color,alpha=1){
-  const hw=w/2,hd=d/2;
-  const pts=[[-hw,0,-hd],[hw,0,-hd],[hw,0,hd],[-hw,0,hd]]
-    .map(p=>project(applyM(VIEW,applyM(modelM,p))));
+// Quad horizontal (sol) — pas de culling, toujours visible d'en haut
+function quad(M,w,d,color,alpha){
+  alpha=alpha??1;
+  const hx=w/2,hz=d/2;
+  const pts=[[-hx,0,-hz],[hx,0,-hz],[hx,0,hz],[-hx,0,hz]]
+    .map(p=>{const q=mPt(M,p);return proj(q[0],q[1],q[2]);});
   if(pts.some(p=>!p))return;
-  ctx.globalAlpha=alpha;
-  drawFace(pts,color,null);
-  ctx.globalAlpha=1;
+  cx.globalAlpha=alpha;
+  poly(pts,color,null);
+  cx.globalAlpha=1;
 }
 
-// ═══════════════════════════════════════════════════════
-// MONDE : VILLES AVEC AÉROPORTS
-// ═══════════════════════════════════════════════════════
-function sr(n){return((Math.sin(n*127.1)*43758.5453)%1+1)%1;}
+// ════════════════════════════════════════════════════════
+//  MONDE PROCÉDURAL
+// ════════════════════════════════════════════════════════
+function sr(n){return((Math.sin(n*127.1+n*n*.003)*43758.5453)%1+1)%1;}
 
-// 5 villes avec aéroport chacune
+// Villes + aéroports
 const CITIES=[
-  {name:'Paris',      x:0,   z:0,   hdg:0,    pop:120},
-  {name:'Lyon',       x:600, z:200, hdg:0.4,  pop:70},
-  {name:'Marseille',  x:-500,z:400, hdg:-0.3, pop:80},
-  {name:'Bordeaux',   x:200, z:-600,hdg:0.8,  pop:60},
-  {name:'Nice',       x:-200,z:600, hdg:1.2,  pop:50},
+  {name:'Paris',    x:0,   z:0,   hdg:0.0},
+  {name:'Lyon',     x:600, z:150, hdg:0.5},
+  {name:'Marseille',x:-480,z:420, hdg:-0.4},
+  {name:'Bordeaux', x:180, z:-550,hdg:0.9},
+  {name:'Nice',     x:-180,z:580, hdg:1.3},
 ];
 
-// Générer les bâtiments de chaque ville
-const BUILDINGS=[];
-CITIES.forEach((city,ci)=>{
-  const n=city.pop;
-  for(let b=0;b<n;b++){
-    const r=15+sr(ci*500+b*7)*city.pop*1.5;
-    const ang=sr(ci*500+b*7+1)*Math.PI*2;
-    const isCenter=r<city.pop*0.4;
-    BUILDINGS.push({
-      x:city.x+Math.cos(ang)*r, z:city.z+Math.sin(ang)*r,
-      w:isCenter?6+sr(ci*500+b*7+2)*10:3+sr(ci*500+b*7+2)*6,
-      h:isCenter?12+sr(ci*500+b*7+3)*40:3+sr(ci*500+b*7+3)*10,
-      d:isCenter?6+sr(ci*500+b*7+4)*10:3+sr(ci*500+b*7+4)*6,
-      hue:Math.floor(15+sr(ci*500+b*7+5)*40),
-      sat:Math.floor(10+sr(ci*500+b*7+6)*25),
-      city:ci
+// Pré-calculer cos/sin des pistes
+CITIES.forEach((c,i)=>{
+  c.rwX=c.x+Math.sin(c.hdg+Math.PI/2)*70;
+  c.rwZ=c.z+Math.cos(c.hdg+Math.PI/2)*70;
+  c.cos=Math.cos(c.hdg); c.sin=Math.sin(c.hdg);
+  c.RWLEN=110; c.RWWID=14;
+});
+
+// Bâtiments par ville
+const BLDS=[];
+CITIES.forEach((c,ci)=>{
+  const n=50+ci*15;
+  for(let i=0;i<n;i++){
+    const ang=sr(ci*500+i)*Math.PI*2;
+    const r=12+sr(ci*500+i+1)*80;
+    const tall=r<40;
+    BLDS.push({
+      x:c.x+Math.cos(ang)*r, z:c.z+Math.sin(ang)*r,
+      w:tall?5+sr(ci*500+i+2)*9:3+sr(ci*500+i+2)*5,
+      h:tall?10+sr(ci*500+i+3)*35:3+sr(ci*500+i+3)*8,
+      d:tall?5+sr(ci*500+i+4)*9:3+sr(ci*500+i+4)*5,
+      hue:20+sr(ci*500+i+5)*30|0, sat:10+sr(ci*500+i+6)*20|0, ci
     });
   }
 });
 
-// Aéroports (un par ville)
-const AIRPORTS=CITIES.map((city,ci)=>{
-  const RWLEN=120,RWWID=16;
-  const hdg=city.hdg;
-  // Position de la piste : décalée du centre ville
-  const rwx=city.x+Math.cos(city.hdg+Math.PI/2)*80;
-  const rwz=city.z+Math.sin(city.hdg+Math.PI/2)*80;
-  return{
-    city:ci,name:city.name,
-    x:rwx,z:rwz,hdg,
-    RWLEN,RWWID,
-    cos:Math.cos(hdg),sin:Math.sin(hdg)
-  };
-});
-
-// Végétation
-const TREES=[];
-for(let i=0;i<180;i++){
-  const type=Math.floor(sr(i*7+6)*3);
-  TREES.push({x:(sr(i*3)-.5)*1800,z:(sr(i*3+1)-.5)*1800,s:.5+sr(i*3+2)*.9,type});
-}
-
-// Collines
-const HILLS=[];
-for(let i=0;i<40;i++)
-  HILLS.push({x:(sr(i*9)-.5)*2000,z:(sr(i*9+1)-.5)*2000,r:25+sr(i*9+2)*70,h:5+sr(i*9+3)*18});
+// Arbres
+const TREES=Array.from({length:200},(_,i)=>({
+  x:(sr(i*3)-.5)*1600, z:(sr(i*3+1)-.5)*1600,
+  s:.5+sr(i*3+2)*.8, t:Math.floor(sr(i*3+3)*3)
+}));
 
 // Nuages
-const CLOUDS=[];
-for(let i=0;i<35;i++) CLOUDS.push({
-  x:(sr(i*5)-.5)*1200,y:65+sr(i*5+1)*90,z:(sr(i*5+2)-.5)*1200,
-  puffs:Array.from({length:5+Math.floor(sr(i*5+4)*5)},(_,j)=>({
-    dx:(sr(i*30+j*4)-.5)*16,dy:(sr(i*30+j*4+1)-.5)*3,dz:(sr(i*30+j*4+2)-.5)*10,
-    r:5+sr(i*30+j*4+3)*5
+const CLOUDS=Array.from({length:30},(_,i)=>({
+  x:(sr(i*7)-.5)*1000, y:60+sr(i*7+1)*80, z:(sr(i*7+2)-.5)*1000,
+  puffs:Array.from({length:4+Math.floor(sr(i*7+4)*5)},(_,j)=>({
+    dx:(sr(i*40+j*4)-.5)*14,dy:(sr(i*40+j*4+1)-.5)*3,dz:(sr(i*40+j*4+2)-.5)*8,
+    r:4+sr(i*40+j*4+3)*5
   }))
-});
+}));
 
-// Rivières
-const RIVERS=[];
-for(let r=0;r<4;r++){
-  const rx=(sr(r*13)-.5)*800, rz=(sr(r*13+1)-.5)*800;
-  const rsegs=[];
-  for(let i=0;i<16;i++) rsegs.push({
-    x:rx+i*40+sr(r*100+i)*20-10,z:rz+sr(r*100+i+1)*40-20,
-    w:10+sr(r*100+i+2)*8,d:35
-  });
-  RIVERS.push(rsegs);
+// Collines
+const HILLS=Array.from({length:35},(_,i)=>({
+  x:(sr(i*9)-.5)*2000,z:(sr(i*9+1)-.5)*2000,
+  r:20+sr(i*9+2)*60,h:4+sr(i*9+3)*14
+}));
+
+// ════════════════════════════════════════════════════════
+//  ÉTAT DU VOL
+// ════════════════════════════════════════════════════════
+let px,py,pz,pitch,roll,yaw,speed,vspd,prevY,dist,alive,propA;
+let camTX,camTY,camTZ,lkTX,lkTY,lkTZ; // positions cibles caméra
+function reset(){
+  // Départ au-dessus du vide, loin des villes, en vol stabilisé
+  px=-350;py=80;pz=-350;
+  pitch=0;roll=0;yaw=Math.PI*.3;
+  speed=28;vspd=0;prevY=py;dist=0;alive=true;propA=0;
+  // Caméra directement derrière l'avion dès le départ (pas de lerp initial)
+  const bx=Math.sin(yaw),bz=Math.cos(yaw);
+  CAM=v3(px-bx*22,py+6,pz-bz*22);
+  TAR=v3(px+bx*10,py+1,pz+bz*10);
+  camTX=CAM.x;camTY=CAM.y;camTZ=CAM.z;
+  lkTX=TAR.x;lkTY=TAR.y;lkTZ=TAR.z;
+  document.getElementById('res').style.display='none';
+  document.getElementById('appr').style.display='none';
+  apprOpen=false; landDone=false;
+}
+reset();
+
+// ════════════════════════════════════════════════════════
+//  CONTRÔLES
+// ════════════════════════════════════════════════════════
+const K={up:0,dn:0,lt:0,rt:0,bo:0,st:0};
+const KM={ArrowUp:'up',ArrowDown:'dn',ArrowLeft:'lt',ArrowRight:'rt',Shift:'bo'};
+addEventListener('keydown',e=>{
+  initAudio();
+  if(KM[e.key]){K[KM[e.key]]=1;e.preventDefault();}
+  if(e.key==='s'||e.key==='S'){K.st^=1;updStab();}
+});
+addEventListener('keyup',e=>{if(KM[e.key])K[KM[e.key]]=0;});
+
+const touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
+if(touch){
+  document.getElementById('tpad').style.display='block';
+  document.getElementById('hint').style.display='none';
+  const tb=(id,k,tog)=>{
+    const el=document.getElementById(id);
+    if(tog){
+      el.addEventListener('touchstart',e=>{e.preventDefault();initAudio();K[k]^=1;el.classList.toggle('on',!!K[k]);updStab();},{passive:false});
+    } else {
+      el.addEventListener('touchstart',e=>{e.preventDefault();initAudio();K[k]=1;el.classList.add('on');},{passive:false});
+      el.addEventListener('touchend',e=>{e.preventDefault();K[k]=0;el.classList.remove('on');},{passive:false});
+      el.addEventListener('touchcancel',()=>{K[k]=0;el.classList.remove('on');});
+    }
+  };
+  tb('tU','up');tb('tD','dn');tb('tL','lt');tb('tR','rt');tb('tS','st',true);
+}
+function updStab(){
+  document.getElementById('stabbar').style.display=K.st?'block':'none';
+  const el=document.getElementById('tS');if(el)el.classList.toggle('on',!!K.st);
 }
 
-// Tuiles sol
-const TILE=250,TG=5;
-const TILES=[];
-for(let i=0;i<TG;i++)for(let j=0;j<TG;j++)
-  TILES.push({x:(i-2)*TILE,z:(j-2)*TILE});
-
-// ═══════════════════════════════════════════════════════
-// VOL
-// ═══════════════════════════════════════════════════════
-// Démarrage loin des villes (Paris est à 0,0 — on part à l'opposé)
-let px=-300,py=60,pz=-300,pitch=0,roll=0,yaw=Math.PI*.25,speed=28;
-const MIN_SPD=12,MAX_SPD=60;
-let vertSpd=0,prevPY=60;
-// Caméra 18u derrière, 5u au-dessus — assure que l'avion est visible dès le départ
-let camX=px-18*Math.cos(Math.PI*.25),camY=py+5,camZ=pz-18*Math.sin(Math.PI*.25);
-let lkX=px+8*Math.cos(Math.PI*.25),lkY=py+1,lkZ=pz+8*Math.sin(Math.PI*.25);
-let propAngle=0;
-let gameRunning=true,totalDist=0,crashed=false,lastT=performance.now();
-let stabActive=false;
-
-// Piste cible (ville la plus proche)
-let targetAirport=AIRPORTS[0];
-const LV=6,LP=14,LA=22,LL=8,APPR=300;
-let inApproach=false,landDone=false,beepT=0;
-
-const CMsgs={
-  hors:["Presque — mais la piste était plus loin !","Vise le tarmac.","Ce n'était pas la piste !"],
-  vit:["Belle approche, trop brusque !","Descends plus doucement.","Moins de vitesse verticale."],
-  pitch:["Nez trop bas en finale.","Redresse avant de toucher.","Assiette trop prononcée."],
-  align:["Aligne-toi avec la piste.","Un peu de dérive.","Juste l'alignement."],
-  sol:["Le sol n'était pas prévu là !","Pas la piste, mais bravo !","Un peu tôt pour atterrir."]
-};
-const OKMsgs=["Posé comme une plume. Magnifique.","Atterrissage de capitaine !","Les passagers n'ont rien senti.","Douceur et précision.","Parfaitement centré sur la piste."];
-const rnd=a=>a[Math.floor(Math.random()*a.length)];
-
-// ═══════════════════════════════════════════════════════
-// AUDIO
-// ═══════════════════════════════════════════════════════
-let actx,masterG,muted=false,audioOn=false;
+// ════════════════════════════════════════════════════════
+//  AUDIO
+// ════════════════════════════════════════════════════════
+let actx,masterG,muted=false,audioInit=false;
 function initAudio(){
-  if(audioOn)return;audioOn=true;
+  if(audioInit)return;audioInit=true;
   actx=new(window.AudioContext||window.webkitAudioContext)();
-  masterG=actx.createGain();masterG.gain.value=0.14;masterG.connect(actx.destination);
+  masterG=actx.createGain();masterG.gain.value=.12;masterG.connect(actx.destination);
   [220,261.6,329.6,392].forEach((f,i)=>{
     const o=actx.createOscillator(),g=actx.createGain();
     o.type='sine';o.frequency.value=f;
     g.gain.setValueAtTime(0,actx.currentTime);
-    g.gain.linearRampToValueAtTime(.17-i*.04,actx.currentTime+2.5+i*.4);
+    g.gain.linearRampToValueAtTime(.18-i*.04,actx.currentTime+2+i*.3);
     o.connect(g);g.connect(masterG);o.start();
   });
-  [440,493.9,554.4,659.3,739.9,880,739.9,659.3,554.4,440].forEach((f,i)=>{
-    const o=actx.createOscillator(),g=actx.createGain();
-    o.type='triangle';o.frequency.value=f;
-    const t=actx.currentTime+5+i*2.2;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.09,t+.3);
-    g.gain.setValueAtTime(.09,t+1.7);g.gain.linearRampToValueAtTime(0,t+2.2);
-    o.connect(g);g.connect(masterG);o.start(t);o.stop(t+2.3);
-  });
 }
-function playOK(){if(!actx||muted)return;[523.2,659.3,783.9,1046.5].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;const t=actx.currentTime+i*.18;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.08);g.gain.exponentialRampToValueAtTime(.001,t+1);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+1.1);});}
-function playCrash(){if(!actx||muted)return;const b=actx.createBuffer(1,actx.sampleRate*.6,actx.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(actx.sampleRate*.1));const s=actx.createBufferSource(),g=actx.createGain();s.buffer=b;g.gain.value=.28;s.connect(g);g.connect(actx.destination);s.start();}
-function playBeep(){if(!actx||muted)return;const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.07,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.15);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+.17);}
-
-document.getElementById('muteBtn').addEventListener('click',function(){
+document.getElementById('mute').addEventListener('click',function(){
   muted=!muted;this.textContent=muted?'🔇':'🔊';
-  if(masterG)masterG.gain.setTargetAtTime(muted?0:.14,actx.currentTime,.3);
+  if(masterG)masterG.gain.setTargetAtTime(muted?0:.12,actx.currentTime,.2);
 });
-
-// ═══════════════════════════════════════════════════════
-// CONTRÔLES
-// ═══════════════════════════════════════════════════════
-const K={up:0,down:0,left:0,right:0,boost:0,stab:0};
-document.addEventListener('keydown',e=>{
-  if(!audioOn)initAudio();
-  const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Shift:'boost'};
-  if(m[e.key]){K[m[e.key]]=1;e.preventDefault();}
-  if(e.key==='s'||e.key==='S'){K.stab=K.stab?0:1;updateStabUI();}
-});
-document.addEventListener('keyup',e=>{
-  const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Shift:'boost'};
-  if(m[e.key])K[m[e.key]]=0;
-});
-
-function updateStabUI(){
-  document.getElementById('stabHud').style.display=K.stab?'block':'none';
-  const tb=document.getElementById('tStab');
-  if(tb)tb.classList.toggle('on',!!K.stab);
+function beep(f,dur){
+  if(!actx||muted)return;
+  const o=actx.createOscillator(),g=actx.createGain();
+  o.frequency.value=f;o.type='sine';
+  g.gain.setValueAtTime(.08,actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+dur);
+  o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+dur+.05);
+}
+function jingle(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.5),i*160));}
+function crash(){
+  if(!actx||muted)return;
+  const b=actx.createBuffer(1,actx.sampleRate*.5,actx.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(actx.sampleRate*.08));
+  const s=actx.createBufferSource(),g=actx.createGain();
+  s.buffer=b;g.gain.value=.25;s.connect(g);g.connect(actx.destination);s.start();
 }
 
-const isTch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
-function bindT(id,key,toggle=false){
-  const el=document.getElementById(id);
-  if(!el)return;
-  if(toggle){
-    el.addEventListener('touchstart',e=>{
-      e.preventDefault();if(!audioOn)initAudio();
-      K[key]=K[key]?0:1;el.classList.toggle('on',!!K[key]);updateStabUI();
-    },{passive:false});
-  } else {
-    const set=v=>{K[key]=v?1:0;el.classList.toggle('on',v);};
-    el.addEventListener('touchstart',e=>{e.preventDefault();if(!audioOn)initAudio();set(true);},{passive:false});
-    el.addEventListener('touchend',e=>{e.preventDefault();set(false);},{passive:false});
-    el.addEventListener('touchcancel',()=>set(false));
-  }
-}
-if(isTch){
-  document.getElementById('tctl').style.display='block';
-  document.getElementById('hint').style.display='none';
-  ['tU','tD','tL','tR'].forEach((id,i)=>bindT(id,['up','down','left','right'][i]));
-  bindT('tStab','stab',true);
+// ════════════════════════════════════════════════════════
+//  ATTERRISSAGE
+// ════════════════════════════════════════════════════════
+const LV=5,LP=12,LA=20,LL=7,APPR=280;
+let apprOpen=false,landDone=false,apprTimer=0;
+const OK_MSG=["Posé comme une plume !","Atterrissage parfait !","Les passagers n'ont rien senti.","Douceur et précision."];
+const BAD={hors:"Tu as raté la piste.",vit:"Trop brusque — réduis la descente.",pitch:"Nez trop bas à l'atterrissage.",align:"Mauvais alignement avec la piste.",sol:"Ce n'était pas la piste !"};
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+
+function nearestCity(){
+  let best=CITIES[0],bd=Infinity;
+  CITIES.forEach(c=>{const d=Math.hypot(c.rwX-px,c.rwZ-pz);if(d<bd){bd=d;best=c;}});
+  return{c:best,d:bd};
 }
 
-// ═══════════════════════════════════════════════════════
-// MISE À JOUR VOL
-// ═══════════════════════════════════════════════════════
-function update(dt){
-  // Stabilisateur automatique : ramène pitch et roll à zéro progressivement
-  if(K.stab){
-    if(!K.up&&!K.down)  pitch+=(0-pitch)*Math.min(1,dt*2.5);
-    if(!K.left&&!K.right)roll +=(0-roll )*Math.min(1,dt*2.5);
-  }
-
-  // Contrôles normaux
-  pitch+=((K.up-K.down)*.52-pitch)*Math.min(1,dt*3);
-  pitch=Math.max(-.55,Math.min(.55,pitch));
-  roll +=((K.left-K.right)*.68-roll)*Math.min(1,dt*3);
-  roll =Math.max(-.7,Math.min(.7,roll));
-  yaw  +=roll*dt*.8;
-
-  const tgt=(K.boost?MAX_SPD:30)-pitch*18;
-  speed+=(tgt-speed)*Math.min(1,dt*1.2);
-  speed=Math.max(MIN_SPD,Math.min(MAX_SPD,speed));
-
-  const fx=Math.cos(yaw),fz=Math.sin(yaw),fy=Math.sin(pitch)*.6;
-  const fl=Math.sqrt(fx*fx+fy*fy+fz*fz);
-  px+=fx/fl*speed*dt; py+=fy/fl*speed*dt; pz+=fz/fl*speed*dt;
-  totalDist+=speed*dt;
-  vertSpd=(py-prevPY)/Math.max(dt,.001); prevPY=py;
-
-  if(py<=1.2){checkLand();if(!landDone){py=1.2;if(Math.abs(pitch)>.15||speed>35)doEnd(false,'sol');}}
-  py=Math.min(py,350);
-  propAngle+=dt*speed*1.8;
-
-  // Caméra souple derrière l'avion — recul 18u, hauteur 5u
-  const ox=-18*Math.cos(yaw),oz=-18*Math.sin(yaw);
-  camX+=(px+ox-camX)*Math.min(1,dt*3.5);
-  camY+=(py+5-camY)*Math.min(1,dt*3.5);
-  camZ+=(pz+oz-camZ)*Math.min(1,dt*3.5);
-  lkX+=(px+8*Math.cos(yaw)-lkX)*Math.min(1,dt*3.5);
-  lkY+=(py+1-lkY)*Math.min(1,dt*3.5);
-  lkZ+=(pz+8*Math.sin(yaw)-lkZ)*Math.min(1,dt*3.5);
-
-  updateHUD(dt);
-  recycleTiles();
-  recycleDeco();
-}
-
-function nearestAirport(){
-  let best=null,bestD=Infinity;
-  AIRPORTS.forEach(a=>{
-    const d=Math.sqrt((a.x-px)**2+(a.z-pz)**2);
-    if(d<bestD){bestD=d;best=a;}
-  });
-  return best;
-}
-
-function checkLand(){
+function checkLand(nc){
   if(landDone)return;
-  const a=targetAirport;
-  const dx=px-a.x,dz=pz-a.z;
-  const along=dx*a.cos+dz*a.sin;
-  const lat=Math.abs(-dx*a.sin+dz*a.cos);
-  if(Math.abs(along)>a.RWLEN/2||lat>a.RWWID/2+2){doEnd(false,'hors');return;}
+  const c=nc;
+  const dx=px-c.rwX,dz=pz-c.rwZ;
+  const along=dx*c.sin+dz*c.cos;
+  const lat=Math.abs(-dx*c.cos+dz*c.sin);
+  if(Math.abs(along)>c.RWLEN/2||lat>c.RWWID/2+2){end(false,'hors');return;}
   landDone=true;
   const pd=Math.abs(pitch*180/Math.PI);
-  const fd=[Math.cos(yaw),Math.sin(yaw)];
-  let al=Math.acos(Math.min(1,Math.max(-1,fd[0]*a.cos+fd[1]*a.sin)))*180/Math.PI;
+  const fwd=v3(Math.sin(yaw),0,Math.cos(yaw));
+  const rax=v3(c.sin,0,c.cos);
+  let al=Math.acos(Math.min(1,Math.abs(vdot(fwd,rax))))*180/Math.PI;
   al=Math.min(al,180-al);
-  if(Math.abs(vertSpd)<=LV&&pd<=LP&&al<=LA&&lat<=LL)doEnd(true);
-  else{let c='vit';if(pd>LP)c='pitch';else if(al>LA)c='align';else if(lat>LL)c='sol';doEnd(false,c);}
+  if(Math.abs(vspd)<=LV&&pd<=LP&&al<=LA&&lat<=LL)end(true);
+  else{
+    let cat='vit';
+    if(pd>LP)cat='pitch';else if(al>LA)cat='align';else if(lat>LL)cat='sol';
+    end(false,cat);
+  }
 }
 
-function doEnd(ok,cat){
-  if(crashed)return;crashed=true;gameRunning=false;
-  document.getElementById('lhud').style.display='none';
+function end(ok,cat){
+  if(!alive)return;alive=false;
+  document.getElementById('appr').style.display='none';
+  const nc=nearestCity();
   if(ok){
-    playOK();
-    const b=document.getElementById('banner');
-    b.innerHTML='🛬 '+rnd(OKMsgs)+' ('+targetAirport.name+')<br><span style="font-size:13px;opacity:.7">Appuie sur Redécoller pour repartir</span>';
-    b.style.display='block';
-    setTimeout(()=>{
-      b.style.display='none';
-      document.getElementById('rtitle').textContent='✈ Posé à '+targetAirport.name+' !';
-      document.getElementById('rtitle').style.color='#7effa0';
-      document.getElementById('rmsg').textContent=rnd(OKMsgs);
-      document.getElementById('rsub').textContent=Math.round(totalDist*3)+' m parcourus · Bravo !';
-      document.getElementById('result').style.display='flex';
-    },2200);
+    jingle();
+    document.getElementById('rTitle').textContent='✈ Posé à '+nc.c.name+' !';
+    document.getElementById('rTitle').style.color='#7effa0';
+    document.getElementById('rMsg').textContent=rnd(OK_MSG);
   } else {
-    playCrash();
-    document.getElementById('rtitle').textContent='💥 Crash';
-    document.getElementById('rtitle').style.color='#ff7878';
-    document.getElementById('rmsg').textContent=rnd(CMsgs[cat]||CMsgs.sol);
-    document.getElementById('rsub').textContent=Math.round(totalDist*3)+' m parcourus.';
-    document.getElementById('result').style.display='flex';
+    crash();
+    document.getElementById('rTitle').textContent='💥 Crash';
+    document.getElementById('rTitle').style.color='#ff7878';
+    document.getElementById('rMsg').textContent=BAD[cat]||BAD.sol;
   }
+  document.getElementById('rSub').textContent=Math.round(dist*3)+' m parcourus.';
+  document.getElementById('res').style.display='flex';
 }
 
-function resetFlight(){
-  px=-300;py=60;pz=-300;pitch=0;roll=0;yaw=Math.PI*.25;speed=28;
-  totalDist=0;vertSpd=0;prevPY=60;crashed=false;landDone=false;
-  camX=px-18*Math.cos(Math.PI*.25);camY=py+5;camZ=pz-18*Math.sin(Math.PI*.25);
-  lkX=px+8*Math.cos(Math.PI*.25);lkY=py+1;lkZ=pz+8*Math.sin(Math.PI*.25);
-  inApproach=false;beepT=0;gameRunning=true;
-  document.getElementById('result').style.display='none';
-  document.getElementById('banner').style.display='none';
-  document.getElementById('lhud').style.display='none';
-  document.getElementById('cityName').style.display='none';
-}
-document.getElementById('rbtn').addEventListener('click',()=>{if(!audioOn)initAudio();resetFlight();});
+// ════════════════════════════════════════════════════════
+//  MISE À JOUR
+// ════════════════════════════════════════════════════════
+let lastT=performance.now();
+function update(dt){
+  if(!alive)return;
 
-function updateHUD(dt){
-  document.getElementById('altV').textContent=Math.round(py*3)+' m';
-  document.getElementById('spdV').textContent=Math.round(speed*6)+' km/h';
-
-  // Ville la plus proche pour compass et atterrissage
-  targetAirport=nearestAirport();
-  const a=targetAirport;
-  const dx=a.x-px,dz=a.z-pz,dH=Math.sqrt(dx*dx+dz*dz);
-  let rel=((Math.atan2(dz,dx)-yaw)*180/Math.PI+540)%360-180;
-  document.getElementById('carr').style.transform='rotate('+rel+'deg)';
-  document.getElementById('cdist').textContent=Math.round(dH*3)+' m';
-
-  // Nom de la ville proche
-  const cn=document.getElementById('cityName');
-  if(dH<300){cn.textContent='✈ '+a.name;cn.style.display='block';}
-  else cn.style.display='none';
-
-  if(dH<APPR&&!inApproach){inApproach=true;document.getElementById('lhud').style.display='block';playBeep();}
-  if(dH>=APPR&&inApproach&&!landDone){inApproach=false;document.getElementById('lhud').style.display='none';}
-  if(inApproach){
-    beepT+=dt;if(beepT>4){beepT=0;playBeep();}
-    const el1=document.getElementById('lvs');el1.textContent=(-vertSpd*3).toFixed(1)+' m/s';el1.className=Math.abs(vertSpd)<=LV?'ok':'bad';
-    const el2=document.getElementById('lpt');el2.textContent=(pitch*180/Math.PI).toFixed(1)+'°';el2.className=Math.abs(pitch*180/Math.PI)<=LP?'ok':'bad';
-    const fd=[Math.cos(yaw),Math.sin(yaw)];
-    let al=Math.acos(Math.min(1,Math.max(-1,fd[0]*a.cos+fd[1]*a.sin)))*180/Math.PI;
-    al=Math.min(al,180-al);
-    const el3=document.getElementById('lal');el3.textContent=al.toFixed(1)+'°';el3.className=al<=LA?'ok':'bad';
+  // Stabilisateur
+  if(K.st){
+    if(!K.up&&!K.dn)pitch*=Math.pow(.02,dt);
+    if(!K.lt&&!K.rt)roll*=Math.pow(.02,dt);
   }
-}
 
-function recycleTiles(){
-  TILES.forEach(t=>{
-    while(t.x<px-TILE*2.5)t.x+=TILE*TG;while(t.x>px+TILE*2.5)t.x-=TILE*TG;
-    while(t.z<pz-TILE*2.5)t.z+=TILE*TG;while(t.z>pz+TILE*2.5)t.z-=TILE*TG;
-  });
-}
-function recycleDeco(){
+  // Tangage / roulis
+  const tPitch=(K.up-K.dn)*.5;
+  const tRoll=(K.lt-K.rt)*.65;
+  pitch+=(tPitch-pitch)*Math.min(1,dt*3.5);pitch=Math.max(-.55,Math.min(.55,pitch));
+  roll+=(tRoll-roll)*Math.min(1,dt*3.5);roll=Math.max(-.7,Math.min(.7,roll));
+  yaw+=roll*dt*.75;
+
+  // Vitesse
+  const tSpd=(K.bo?55:30)-pitch*20;
+  speed+=(tSpd-speed)*Math.min(1,dt*1.2);speed=Math.max(12,Math.min(60,speed));
+
+  // Position avion
+  const sy=Math.sin(yaw),cy2=Math.cos(yaw),sp=Math.sin(pitch)*.6;
+  const fl2=Math.sqrt(sy*sy+sp*sp+cy2*cy2);
+  px+=sy/fl2*speed*dt; py+=sp/fl2*speed*dt; pz+=cy2/fl2*speed*dt;
+  dist+=speed*dt; propA+=dt*speed*1.6;
+  vspd=(py-prevY)/Math.max(dt,.001);prevY=py;
+
+  // Sol
+  if(py<=1.5){
+    const nc=nearestCity();
+    checkLand(nc.c);
+    if(!landDone){py=1.5;if(Math.abs(pitch)>.18||speed>38)end(false,'sol');}
+  }
+  py=Math.min(py,350);
+
+  // Caméra souple — 20u derrière, 8u devant
+  const bx=Math.sin(yaw),bz=Math.cos(yaw);
+  camTX=px-bx*20; camTY=py+6; camTZ=pz-bz*20;
+  lkTX=px+bx*8;  lkTY=py+1; lkTZ=pz+bz*8;
+  const L=Math.min(1,dt*5);
+  CAM.x+=(camTX-CAM.x)*L; CAM.y+=(camTY-CAM.y)*L; CAM.z+=(camTZ-CAM.z)*L;
+  TAR.x+=(lkTX-TAR.x)*L;  TAR.y+=(lkTY-TAR.y)*L;  TAR.z+=(lkTZ-TAR.z)*L;
+
+  // Recycler déco
   const R=700;
-  TREES.forEach(t=>{if(t.x<px-R)t.x+=R*2;if(t.x>px+R)t.x-=R*2;if(t.z<pz-R)t.z+=R*2;if(t.z>pz+R)t.z-=R*2;});
-  CLOUDS.forEach(c=>{if(c.x<px-800)c.x+=1600;if(c.x>px+800)c.x-=1600;if(c.z<pz-800)c.z+=1600;if(c.z>pz+800)c.z-=1600;});
+  TREES.forEach(t=>{
+    if(t.x<px-R)t.x+=R*2;else if(t.x>px+R)t.x-=R*2;
+    if(t.z<pz-R)t.z+=R*2;else if(t.z>pz+R)t.z-=R*2;
+  });
+  CLOUDS.forEach(c=>{
+    if(c.x<px-800)c.x+=1600;else if(c.x>px+800)c.x-=1600;
+    if(c.z<pz-800)c.z+=1600;else if(c.z>pz+800)c.z-=1600;
+  });
+
+  // HUD
+  document.getElementById('hAlt').textContent=Math.round(py*3)+' m';
+  document.getElementById('hSpd').textContent=Math.round(speed*6)+' km/h';
+
+  const {c:nc2,d:nd}=nearestCity();
+  const dx2=nc2.rwX-px,dz2=nc2.rwZ-pz;
+  const ang=Math.atan2(dx2,dz2)-yaw;
+  document.getElementById('carr').style.transform=`rotate(${ang*180/Math.PI}deg)`;
+  document.getElementById('cdist').textContent=Math.round(nd*3)+' m';
+  const cnEl=document.getElementById('cname');
+  if(nd<250){cnEl.textContent='✈ '+nc2.name;cnEl.style.display='block';}
+  else cnEl.style.display='none';
+
+  // Approche
+  if(nd<APPR&&!apprOpen){apprOpen=true;document.getElementById('appr').style.display='block';beep(880,.15);}
+  if(nd>=APPR&&apprOpen&&!landDone){apprOpen=false;document.getElementById('appr').style.display='none';}
+  if(apprOpen){
+    apprTimer+=dt;if(apprTimer>5){apprTimer=0;beep(660,.12);}
+    const fwd2=v3(Math.sin(yaw),0,Math.cos(yaw));
+    const rax2=v3(nc2.sin,0,nc2.cos);
+    let al2=Math.acos(Math.min(1,Math.abs(vdot(fwd2,rax2))))*180/Math.PI;
+    al2=Math.min(al2,180-al2);
+    const setI=(id,val,ok2)=>{const el=document.getElementById(id);el.textContent=val;el.className=ok2?'ok':'bad';};
+    setI('aVS',(-vspd*3).toFixed(1)+' m/s',Math.abs(vspd)<=LV);
+    setI('aPT',(pitch*180/Math.PI).toFixed(1)+'°',Math.abs(pitch*180/Math.PI)<=LP);
+    setI('aAL',al2.toFixed(1)+'°',al2<=LA);
+  }
 }
 
-// ═══════════════════════════════════════════════════════
-// DESSIN
-// ═══════════════════════════════════════════════════════
-function drawAirport(ap){
-  const rm=mulM(translate(ap.x,.05,ap.z),rotY(-ap.hdg));
-  const L=ap.RWLEN,W2=ap.RWWID;
-  // Tarmac
-  drawPlane(rm,L+30,W2+40,'#333a3f');
-  // Piste principale
-  drawPlane(rm,L,W2,'#2a2f33');
+// ════════════════════════════════════════════════════════
+//  DESSIN DE LA SCÈNE
+// ════════════════════════════════════════════════════════
+function drawAirport(c){
+  // Tarmac gris
+  quad(mMul(mT(c.rwX,.02,c.rwZ),mRY(-c.hdg)),c.RWLEN+20,c.RWWID+30,'#2e3338');
+  // Piste
+  quad(mMul(mT(c.rwX,.03,c.rwZ),mRY(-c.hdg)),c.RWLEN,c.RWWID,'#222628');
   // Lignes centrales
-  for(let i=0;i<11;i++){
-    const ox=(-L/2+8+i*10)*ap.cos,oz=(-L/2+8+i*10)*ap.sin;
-    drawPlane(mulM(translate(ap.x+ox,.07,ap.z+oz),rotY(-ap.hdg)),5,.8,'#ddd');
+  for(let i=0;i<9;i++){
+    const off=(i-4)*11;
+    quad(mMul(mT(c.rwX+c.sin*off,.04,c.rwZ+c.cos*off),mRY(-c.hdg)),7,.8,'#ccc');
   }
-  // Bords
-  [-W2/2+.5,W2/2-.5].forEach(zOff=>{
-    const ex=-zOff*ap.sin,ez=zOff*ap.cos;
-    drawPlane(mulM(translate(ap.x+ex,.07,ap.z+ez),rotY(-ap.hdg)),L,.5,'#ddd');
-  });
-  // Seuil de piste (jaune)
-  for(let z=-3;z<=3;z+=1.5){
-    const tx=(-L/2+4)*ap.cos-z*ap.sin,tz=(-L/2+4)*ap.sin+z*ap.cos;
-    drawPlane(mulM(translate(ap.x+tx,.07,ap.z+tz),rotY(-ap.hdg)),5,.7,'#f0d020');
+  // Seuil
+  for(let j=-2;j<=2;j++){
+    const lx=c.rwX-c.sin*(c.RWLEN/2-5)+c.cos*j*2.5;
+    const lz=c.rwZ-c.cos*(c.RWLEN/2-5)+c.sin*j*2.5;
+    quad(mMul(mT(lx,.04,lz),mRY(-c.hdg)),5,.7,'#e8c820');
   }
-  // Taxiway
-  const twx=ap.x+W2*ap.sin*(-1),twz=ap.z+W2*ap.cos;
-  drawPlane(mulM(translate(twx,.04,twz),rotY(-ap.hdg)),L*.6,8,'#3a4040');
-
   // Tour de contrôle
-  const tcx=ap.x+ap.sin*(W2/2+12),tcz=ap.z+ap.cos*(W2/2+12);
-  drawCylinder(mulM(translate(tcx,6,tcz)),1.3,12,10,42,25,52);
-  drawBox(mulM(translate(tcx,13,tcz)),5,2.5,5,195,45,58,0.9);
-  // Vitres tour
-  drawBox(mulM(translate(tcx,13.5,tcz-2.6)),4.5,1.5,.1,210,40,32,0.85);
+  const tcx=c.rwX+c.cos*(c.RWWID/2+10),tcz=c.rwZ-c.sin*(c.RWWID/2+10);
+  cyl(mMul(mT(tcx,5,tcz),mRY(0)),1.2,10,8,42,22,52);
+  box(mT(tcx,11.5,tcz),5,2.5,5,195,38,55);
   // Hangar
-  const hgx=ap.x+ap.cos*(-L/2+15)-ap.sin*(W2/2+18);
-  const hgz=ap.z+ap.sin*(-L/2+15)+ap.cos*(W2/2+18);
-  drawBox(mulM(translate(hgx,5,hgz),rotY(-ap.hdg)),30,10,20,210,15,45);
-  drawBox(mulM(translate(hgx,10.5,hgz),rotY(-ap.hdg)),30,2,20,210,10,38);
-  // Balises d'approche (feux rouges sur le sol)
-  for(let i=1;i<=5;i++){
-    const bx=ap.x+ap.cos*(-L/2-i*15),bz=ap.z+ap.sin*(-L/2-i*15);
-    drawBox(mulM(translate(bx,.5,bz)),0.4,1,.4,0,80,50);
+  const hx=c.rwX-c.sin*(c.RWLEN/2-12)-c.cos*(c.RWWID/2+16);
+  const hz=c.rwZ-c.cos*(c.RWLEN/2-12)+c.sin*(c.RWWID/2+16);
+  box(mMul(mT(hx,5,hz),mRY(-c.hdg)),28,10,18,210,14,42);
+  box(mMul(mT(hx,10.8,hz),mRY(-c.hdg)),28,2,18,210,10,34);
+}
+
+function drawCity(c,ci){
+  BLDS.filter(b=>b.ci===ci&&Math.hypot(b.x-px,b.z-pz)<550).forEach(b=>{
+    box(mT(b.x,b.h/2,b.z),b.w,b.h,b.d,b.hue,b.sat,50);
+    if(b.h>12){
+      box(mT(b.x,b.h+.4,b.z),b.w,0.8,b.d,b.hue,b.sat,36);
+    } else {
+      box(mT(b.x,b.h+.6,b.z),b.w+.5,1.2,b.d+.5,8,52,34);
+    }
+  });
+}
+
+function drawTree(t){
+  const s=t.s;
+  if(t.t===0){
+    cyl(mMul(mT(t.x,s,t.z),mS(s*.35,s,s*.35)),0.5,2,6,25,32,24);
+    // Cônes du sapin
+    [[t.x,3.5*s,t.z,2.5*s,5*s],[t.x,6*s,t.z,1.6*s,3.5*s],[t.x,8.5*s,t.z,.9*s,2*s]].forEach(([x,y,z,r,h])=>{
+      const segs=7,faces2=[];
+      for(let i=0;i<segs;i++){
+        const a0=i/segs*Math.PI*2,a1=(i+1)/segs*Math.PI*2;
+        const p=[[x,y+h,z],[x+Math.cos(a0)*r,y,z+Math.sin(a0)*r],[x+Math.cos(a1)*r,y,z+Math.sin(a1)*r]];
+        const pts=p.map(([wx,wy,wz])=>proj(wx,wy,wz));
+        if(pts.some(q=>!q))continue;
+        faces2.push({pts,depth:(pts[0][2]+pts[1][2]+pts[2][2])/3});
+      }
+      faces2.sort((a,b)=>b.depth-a.depth).forEach(f=>poly(f.pts,`hsl(118,${48+s*5}%,${24+s*4}%)`,null));
+    });
+  } else if(t.t===1){
+    cyl(mMul(mT(t.x,2*s,t.z),mS(s*.3,s,s*.3)),0.4,4,6,25,28,24);
+    cyl(mMul(mT(t.x,5.5*s,t.z),mS(s*2,s*1.1,s*2)),1,1,9,105,40,28);
+  } else {
+    cyl(mMul(mT(t.x,3*s,t.z),mS(s*.25,s,s*.25)),0.4,6,6,28,26,38);
+    for(let a=0;a<5;a++){
+      const ag=a/5*Math.PI*2;
+      box(mMul(mT(t.x+Math.cos(ag)*2*s,7*s,t.z+Math.sin(ag)*2*s),mRY(-ag),mRX(-.3)),3*s,.12,.25,105,55,28);
+    }
   }
 }
 
-function drawCity(city,ci){
-  const dist=Math.sqrt((city.x-px)**2+(city.z-pz)**2);
-  if(dist>900)return;
+function drawPlane(){
+  const S=3; // scale avion
+  const M0=mMul(mT(px,py,pz),mRY(-yaw),mRX(-pitch*.95),mRZ(-roll));
+  const P=(...args)=>mMul(M0,...args); // compose avec base avion
 
-  // Bâtiments de cette ville
-  BUILDINGS.filter(b=>b.city===ci).forEach(b=>{
-    const bd=Math.sqrt((b.x-px)**2+(b.z-pz)**2);
-    if(bd>600)return;
-    // Murs
-    drawBox(translate(b.x,b.h/2,b.z),b.w,b.h,b.d,b.hue,b.sat,52);
-    // Toit
-    if(b.h>15){
-      // Immeuble : toit plat avec bordure
-      drawBox(translate(b.x,b.h+.3,b.z),b.w,0.6,b.d,b.hue,b.sat,38);
-      // Antenne
-      drawCylinder(mulM(translate(b.x,b.h+2,b.z)),0.1,4,4,0,0,45);
-    } else {
-      // Maison : toit pentu (rouge brique)
-      drawBox(translate(b.x,b.h+.6,b.z),b.w+.4,1.2,b.d+.4,8,55,36);
+  // Fuselage
+  cyl(P(mRZ(Math.PI/2),mT(0,0,0)),S*.45,S*8,12,215,12,76);
+  // Nez (cône pointé vers +X local)
+  {
+    const segs=10,r=S*.45,h=S*1.5;
+    const tip=mPt(P(mT(S*4,0,0)),[0,0,0]);
+    const faces2=[];
+    for(let i=0;i<segs;i++){
+      const a0=i/segs*Math.PI*2,a1=(i+1)/segs*Math.PI*2;
+      const b0=mPt(P(mT(S*2.5,0,0),mRZ(Math.PI/2)),[Math.cos(a0)*r,0,Math.sin(a0)*r]);
+      const b1=mPt(P(mT(S*2.5,0,0),mRZ(Math.PI/2)),[Math.cos(a1)*r,0,Math.sin(a1)*r]);
+      const pts=[proj(...tip),proj(...b0),proj(...b1)];
+      if(pts.some(q=>!q))continue;
+      faces2.push({pts,depth:(pts[0][2]+pts[1][2]+pts[2][2])/3});
     }
-    // Fenêtres (rangées)
-    if(b.h>8){
-      for(let fl=1;fl<Math.floor(b.h/4);fl++){
-        drawBox(translate(b.x,fl*4,b.z-b.d/2-.06),b.w*.5,1.2,.1,210,20,22,.92);
-      }
+    faces2.sort((a,b)=>b.depth-a.depth).forEach(f=>poly(f.pts,'hsl(215,10%,68%)',null));
+  }
+  // Queue effilée
+  cyl(P(mRZ(Math.PI/2),mT(S*2.5,0,0),mS(1,.65,.65)),S*.45,S*3,10,215,10,62);
+
+  // Cockpit
+  box(P(mT(S*.8,S*.45,0)),S*.95,S*.5,S*.75,210,32,28,.92);
+
+  // Ailes
+  box(P(mT(0,S*.12,S*2.1),mRZ(.05)),S*1.2,S*.16,S*4.2,218,55,56);
+  box(P(mT(0,S*.12,-S*2.1),mRZ(-.05)),S*1.2,S*.16,S*4.2,218,55,56);
+  // Winglets
+  box(P(mT(0,S*.65,S*4.1),mRZ(.28)),S*.6,S*.14,S*.22,218,50,48);
+  box(P(mT(0,S*.65,-S*4.1),mRZ(-.28)),S*.6,S*.14,S*.22,218,50,48);
+
+  // Empennage H
+  box(P(mT(-S*2.6,S*.12,S*1.3)),S*.7,S*.12,S*2.4,215,16,55);
+  box(P(mT(-S*2.6,S*.12,-S*1.3)),S*.7,S*.12,S*2.4,215,16,55);
+  // Dérive
+  box(P(mT(-S*2.4,S*.85,0)),S*.75,S*1.5,S*.14,215,16,52);
+
+  // Moteurs
+  [-S*1.8,S*1.8].forEach(z=>{
+    cyl(P(mRZ(Math.PI/2),mT(0,S*.32,z)),S*.32,S*1.8,10,28,10,36);
+    box(P(mT(0,S*.12,z)),S,S*.28,S*.22,210,8,40);
+  });
+
+  // Hélices
+  [-S*1.8,S*1.8].forEach((z,mi)=>{
+    for(let b=0;b<4;b++){
+      const a=propA+(mi*.4)+b*Math.PI/2;
+      box(P(mT(S*1.2,S*.32,z),mRX(a)),S*.1,S*1.5,S*.28,0,0,22);
     }
   });
+
+  // Train
+  [-S*1.2,S*1.2].forEach(z=>{
+    box(P(mT(S*.3,-S*.62,z)),S*.1,S*.7,S*.1,0,0,28);
+    cyl(P(mT(S*.3,-S*.98,z),mRX(Math.PI/2)),S*.22,S*.22,8,0,0,18);
+  });
+  box(P(mT(S*2.3,-S*.45,0)),S*.1,S*.5,S*.1,0,0,28);
+  cyl(P(mT(S*2.3,-S*.75,0),mRX(Math.PI/2)),S*.16,S*.16,8,0,0,18);
+
+  // Feux nav
+  box(P(mT(0,S*.12,S*4.2)),S*.2,S*.2,S*.2,120,100,55);
+  box(P(mT(0,S*.12,-S*4.2)),S*.2,S*.2,S*.2,0,100,55);
+  box(P(mT(-S*2.4,S*1.6,0)),S*.16,S*.16,S*.16,0,0,90);
 }
 
 function drawScene(){
-  VIEW=buildView(camX,camY,camZ,lkX,lkY,lkZ);
+  buildView();
 
-  // Horizon
-  const farX=camX+(lkX-camX)*1000,farZ=camZ+(lkZ-camZ)*1000;
-  const farV=applyM(VIEW,[farX,0,farZ]);
-  let horizonY=CY;
-  if(farV[2]>0.1)horizonY=CY-farV[1]/farV[2]*FOCAL;
-  horizonY=Math.max(0,Math.min(H,horizonY));
+  // Horizon calculé
+  const fwd=vnorm(vsub(TAR,CAM));
+  // Point au sol droit devant → projeter y=0
+  // horizon Y = CY - (cam_y_monde à l'infini)/z
+  // Approche : projeter point loin sur plan y=0
+  const far=vadd(CAM,vscale(fwd,2000));
+  const hPt=proj(far.x,0,far.z);
+  let horizY=hPt?hPt[1]:CY;
+  horizY=Math.max(0,Math.min(H,horizY));
 
-  // Ciel crépusculaire
-  const skyG=ctx.createLinearGradient(0,0,0,horizonY);
-  skyG.addColorStop(0,'#060e22');
-  skyG.addColorStop(0.35,'#0d2355');
-  skyG.addColorStop(0.75,'#1a5aaa');
-  skyG.addColorStop(0.9,'#e8641a');
-  skyG.addColorStop(1,'#f5c045');
-  ctx.fillStyle=skyG;ctx.fillRect(0,0,W,horizonY);
+  // Ciel
+  const sk=cx.createLinearGradient(0,0,0,horizY);
+  sk.addColorStop(0,'#04091a');sk.addColorStop(.4,'#0c1e50');
+  sk.addColorStop(.75,'#1555a8');sk.addColorStop(.9,'#e05a10');sk.addColorStop(1,'#f0b830');
+  cx.fillStyle=sk;cx.fillRect(0,0,W,horizY);
 
   // Sol
-  const gndG=ctx.createLinearGradient(0,horizonY,0,H);
-  gndG.addColorStop(0,'#5a9230');
-  gndG.addColorStop(0.5,'#4a7a22');
-  gndG.addColorStop(1,'#2f5010');
-  ctx.fillStyle=gndG;ctx.fillRect(0,horizonY,W,H-horizonY);
+  const gd=cx.createLinearGradient(0,horizY,0,H);
+  gd.addColorStop(0,'#5c9432');gd.addColorStop(.6,'#4a7820');gd.addColorStop(1,'#2e4e10');
+  cx.fillStyle=gd;cx.fillRect(0,horizY,W,H-horizY);
 
-  // Étoiles (si l'horizon est assez bas)
-  if(horizonY>50){
-    ctx.fillStyle='#fff';
-    for(let s=0;s<60;s++){
-      const sx=(sr(s*7)*W)|0,sy=(sr(s*7+1)*horizonY*.7)|0;
-      ctx.globalAlpha=.4+sr(s*7+2)*.5;
-      ctx.fillRect(sx,sy,1,1);
-    }
-    ctx.globalAlpha=1;
+  // Étoiles
+  cx.fillStyle='#fff';
+  for(let s=0;s<50;s++){
+    const sx=sr(s*7)*W|0,sy=sr(s*7+1)*horizY*.75|0;
+    cx.globalAlpha=.3+sr(s*7+2)*.6;cx.fillRect(sx,sy,1,1);
   }
-
-  // Rivières
-  RIVERS.forEach(segs=>segs.forEach(r=>{
-    if(Math.sqrt((r.x-px)**2+(r.z-pz)**2)>600)return;
-    drawPlane(translate(r.x,.03,r.z),r.w,r.d,'#3272b8',.9);
-  }));
+  cx.globalAlpha=1;
 
   // Collines
   HILLS.forEach(h=>{
-    if(Math.sqrt((h.x-px)**2+(h.z-pz)**2)>700)return;
-    drawBox(mulM(translate(h.x,h.h/2,h.z)),h.r*2,h.h,h.r*2,100,30,26,.75);
+    if(Math.hypot(h.x-px,h.z-pz)>700)return;
+    box(mT(h.x,h.h*.5,h.z),h.r*2,h.h,h.r*2,100,28,28,.7);
   });
 
   // Villes + aéroports
-  CITIES.forEach((city,ci)=>{
-    drawCity(city,ci);
-    drawAirport(AIRPORTS[ci]);
+  CITIES.forEach((c,ci)=>{
+    if(Math.hypot(c.x-px,c.z-pz)>900)return;
+    drawCity(c,ci);
+    drawAirport(c);
   });
 
-  // Végétation
-  TREES.forEach(t=>{
-    const s=t.s;
-    if(Math.sqrt((t.x-px)**2+(t.z-pz)**2)>480)return;
-    if(t.type===0){
-      // Conifère
-      drawCylinder(mulM(translate(t.x,1.5*s,t.z),scaleM(s*.4,s,s*.4)),0.4,3,6,25,35,26);
-      drawCone(mulM(translate(t.x,3*s,t.z),scaleM(s,s,s)),2.2,5,8,118,52,28);
-      drawCone(mulM(translate(t.x,5.6*s,t.z),scaleM(s*.7,s*.7,s*.7)),1.5,3.5,8,118,52,34);
-    } else if(t.type===1){
-      // Feuillu
-      drawCylinder(mulM(translate(t.x,2*s,t.z),scaleM(s*.4,s,s*.4)),0.4,4,6,25,30,26);
-      drawCylinder(mulM(translate(t.x,5.5*s,t.z),scaleM(s*1.9,s*1.2,s*1.9)),1,1,10,105,42,30);
-    } else {
-      // Palmier
-      drawCylinder(mulM(translate(t.x,3.5*s,t.z),scaleM(s*.28,s,s*.28)),0.3,7,6,28,28,40);
-      for(let a=0;a<6;a++){
-        const ang=a/6*Math.PI*2;
-        drawBox(mulM(translate(t.x+Math.cos(ang)*2.2*s,7.5*s,t.z+Math.sin(ang)*2.2*s),rotY(-ang)),0.3,0.14,2.8*s,105,58,30);
-      }
-    }
-  });
+  // Arbres
+  TREES.forEach(t=>{if(Math.hypot(t.x-px,t.z-pz)<420)drawTree(t);});
 
   // Nuages
   CLOUDS.forEach(c=>{
     c.puffs.forEach(p=>{
-      const m=mulM(translate(c.x+p.dx,c.y+p.dy,c.z+p.dz),scaleM(p.r*1.5,p.r*.5,p.r));
-      drawCylinder(m,1,1,10,25,12,90,.82);
+      cyl(mMul(mT(c.x+p.dx,c.y+p.dy,c.z+p.dz),mS(p.r*1.6,p.r*.45,p.r)),1,1,9,220,8,88,.8);
     });
   });
 
-  // ── DEBUG ─────────────────────────────────────────────
-  {
-    const vc=applyM(VIEW,[px,py,pz]);
-    document.title=`z=${vc[2].toFixed(1)} cam=(${camX.toFixed(0)},${camY.toFixed(0)},${camZ.toFixed(0)}) lk=(${lkX.toFixed(0)},${lkY.toFixed(0)},${lkZ.toFixed(0)}) av=(${px.toFixed(0)},${py.toFixed(0)},${pz.toFixed(0)})`;
-    const pv=project(vc);
-    if(pv){ctx.fillStyle='#f00';ctx.beginPath();ctx.arc(pv[0],pv[1],30,0,Math.PI*2);ctx.fill();}
-    else{ctx.fillStyle='#f00';ctx.font='bold 20px sans-serif';ctx.fillText('AVION HORS CHAMP z='+vc[2].toFixed(2),20,200);}
-  }
-  const S=2.5;
-  const planeBase=mulM(mulM(mulM(translate(px,py,pz),rotY(-yaw)),rotX(-pitch*.9)),rotZ(-roll));
-  const pb=m=>mulM(planeBase,m);
-
-  // Fuselage (3 cylindres)
-  drawCylinder(pb(mulM(translate(-1.6*S,0,0),rotZ(Math.PI/2))),0.38*S,2.6*S,12,215,12,72);
-  drawCylinder(pb(mulM(translate(0.2*S,0,0),rotZ(Math.PI/2))),0.56*S,3.6*S,12,215,12,80);
-  drawCylinder(pb(mulM(translate(2.1*S,0,0),rotZ(Math.PI/2))),0.44*S,1.6*S,12,215,12,76);
-  // Nez
-  drawCone(pb(mulM(translate(3.0*S,0,0),rotZ(-Math.PI/2))),0.42*S,1.2*S,12,220,8,65);
-  // Queue effilée
-  drawCone(pb(mulM(translate(-2.9*S,0,0),rotZ(Math.PI/2))),0.32*S,1.0*S,10,215,10,62);
-
-  // Cockpit
-  drawBox(pb(translate(0.9*S,0.44*S,0)),1.0*S,.56*S,.78*S,210,35,26,.92);
-
-  // Ailes principales
-  drawBox(pb(mulM(translate(0.1*S,.12*S,2.0*S),rotZ(.06))),1.2*S,.18*S,4.0*S,222,58,60);
-  drawBox(pb(mulM(translate(0.1*S,.12*S,-2.0*S),rotZ(-.06))),1.2*S,.18*S,4.0*S,222,58,60);
-  // Winglets
-  drawBox(pb(mulM(translate(0.1*S,.58*S,3.9*S),rotZ(.28))),0.65*S,.18*S,.3*S,222,52,52);
-  drawBox(pb(mulM(translate(0.1*S,.58*S,-3.9*S),rotZ(-.28))),0.65*S,.18*S,.3*S,222,52,52);
-  // Volets
-  drawBox(pb(translate(-.38*S,.12*S,1.6*S)),.52*S,.14*S,3.0*S,218,52,46);
-  drawBox(pb(translate(-.38*S,.12*S,-1.6*S)),.52*S,.14*S,3.0*S,218,52,46);
-
-  // Empennage horizontal
-  drawBox(pb(translate(-2.3*S,.12*S,1.2*S)),.75*S,.14*S,2.3*S,215,18,58);
-  drawBox(pb(translate(-2.3*S,.12*S,-1.2*S)),.75*S,.14*S,2.3*S,215,18,58);
-  // Dérive verticale
-  drawBox(pb(translate(-2.1*S,.78*S,0)),.8*S,1.4*S,.18*S,215,18,55);
-  drawBox(pb(translate(-2.65*S,.65*S,0)),.55*S,1.1*S,.14*S,215,15,42);
-
-  // 2 Moteurs
-  [-1.65*S,1.65*S].forEach(z=>{
-    drawCylinder(pb(mulM(translate(0.2*S,-.30*S,z),rotZ(Math.PI/2))),.30*S,1.6*S,10,28,12,40);
-    drawCone(pb(mulM(translate(1.1*S,-.30*S,z),rotZ(-Math.PI/2))),.30*S,.45*S,10,28,10,52);
-    drawBox(pb(translate(0.2*S,-.10*S,z)),.95*S,.28*S,.24*S,210,10,42);
-  });
-
-  // Hélices
-  const pa=propAngle;
-  [-1.65*S,1.65*S].forEach((z,mi)=>{
-    const pB=pb(translate(1.12*S,-.30*S,z));
-    for(let i=0;i<4;i++){
-      const ang=pa+(mi*.4)+i*Math.PI/2;
-      drawBox(mulM(pB,rotX(ang)),.12*S,1.4*S,.28*S,0,0,20);
-    }
-  });
-
-  // Train d'atterrissage
-  [-1.1*S,1.1*S].forEach(z=>{
-    drawBox(pb(translate(.4*S,-.65*S,z)),.12*S,.7*S,.12*S,0,0,30);
-    drawCylinder(pb(mulM(translate(.4*S,-.98*S,z),rotX(Math.PI/2))),.22*S,.24*S,8,0,0,20);
-  });
-  drawBox(pb(translate(2.2*S,-.52*S,0)),.12*S,.52*S,.12*S,0,0,30);
-  drawCylinder(pb(mulM(translate(2.2*S,-.82*S,0),rotX(Math.PI/2))),.18*S,.18*S,8,0,0,20);
-
-  // Feux de navigation
-  drawBox(pb(translate(0.1*S,.12*S,3.98*S)),.22*S,.22*S,.22*S,120,100,55);
-  drawBox(pb(translate(0.1*S,.12*S,-3.98*S)),.22*S,.22*S,.22*S,0,100,55);
-  drawBox(pb(translate(-2.1*S,1.5*S,0)),.18*S,.18*S,.18*S,0,0,88);
+  // Avion
+  drawPlane();
 }
 
-// ═══════════════════════════════════════════════════════
-// BOUCLE PRINCIPALE
-// ═══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  BOUCLE
+// ════════════════════════════════════════════════════════
 function loop(){
   requestAnimationFrame(loop);
-  const now=performance.now();
-  const dt=Math.min((now-lastT)/1000,.05);lastT=now;
-  if(gameRunning)update(dt);
+  const now=performance.now(),dt=Math.min((now-lastT)/1000,.05);lastT=now;
+  update(dt);
   drawScene();
 }
 loop();
