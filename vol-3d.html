@@ -682,7 +682,7 @@ function drawPlane(){
   const P=(...args)=>mMul(M0,...args);
 
   // ── Fuselage principal (cylindre blanc allongé) ──────
-  cyl(P(mRZ(Math.PI/2)),S*.38,S*10,14,0,0,88);
+  cyl(P(mRZ(Math.PI/2)),S*.38,S*10,14,210,8,94);
 
   // ── Section nez effilé ───────────────────────────────
   {
@@ -702,11 +702,11 @@ function drawPlane(){
   }
 
   // ── Queue effilée ────────────────────────────────────
-  cyl(P(mRZ(Math.PI/2),mT(S*3.5,0,0),mS(1,.55,.55)),S*.38,S*3.5,12,0,0,80);
+  cyl(P(mRZ(Math.PI/2),mT(S*3.5,0,0),mS(1,.55,.55)),S*.38,S*3.5,12,210,8,88);
 
   // ── Bande de couleur sur fuselage (bleu compagnie) ───
-  // Dessinée comme un box plat sur le côté du fuselage
-  box(P(mT(S*.3,S*.3,0)),S*8,S*.18,S*.02,215,80,38);
+  box(P(mT(S*.3,S*.28,S*.4)),S*8,S*.16,S*.04,214,85,42);
+  box(P(mT(S*.3,S*.28,-S*.4)),S*8,S*.16,S*.04,214,85,42);
 
   // ── Cockpit vitré ────────────────────────────────────
   box(P(mT(S*2.8,S*.28,0)),S*1.1,S*.38,S*.65,210,60,25,.95);
@@ -714,23 +714,24 @@ function drawPlane(){
   box(P(mT(S*3.1,S*.32,0)),S*.5,S*.28,S*.5,215,55,18,.88);
 
   // ── Ailes (longues et minces, dièdre positif) ────────
-  // Racine → milieu
-  box(P(mT(-S*.2,S*.05,S*2.0),mRZ(.04)),S*2.2,S*.11,S*4.0,0,0,82);
-  box(P(mT(-S*.2,S*.05,-S*2.0),mRZ(-.04)),S*2.2,S*.11,S*4.0,0,0,82);
+  // Racine → milieu (gris clair dessus)
+  box(P(mT(-S*.2,S*.05,S*2.0),mRZ(.04)),S*2.2,S*.11,S*4.0,210,8,86);
+  box(P(mT(-S*.2,S*.05,-S*2.0),mRZ(-.04)),S*2.2,S*.11,S*4.0,210,8,86);
   // Milieu → bout (plus fine)
-  box(P(mT(-S*.4,S*.3,S*5.2),mRZ(.12)),S*1.8,S*.08,S*2.8,0,0,78);
-  box(P(mT(-S*.4,S*.3,-S*5.2),mRZ(-.12)),S*1.8,S*.08,S*2.8,0,0,78);
-  // Winglets redressés
-  box(P(mT(-S*.5,S*1.0,S*6.5),mRZ(.55)),S*.6,S*.9,S*.1,0,0,74);
-  box(P(mT(-S*.5,S*1.0,-S*6.5),mRZ(-.55)),S*.6,S*.9,S*.1,0,0,74);
+  box(P(mT(-S*.4,S*.3,S*5.2),mRZ(.12)),S*1.8,S*.08,S*2.8,210,6,82);
+  box(P(mT(-S*.4,S*.3,-S*5.2),mRZ(-.12)),S*1.8,S*.08,S*2.8,210,6,82);
+  // Winglets redressés (blanc pur)
+  box(P(mT(-S*.5,S*1.0,S*6.5),mRZ(.55)),S*.6,S*.9,S*.1,210,5,90);
+  box(P(mT(-S*.5,S*1.0,-S*6.5),mRZ(-.55)),S*.6,S*.9,S*.1,210,5,90);
 
   // ── Empennage horizontal ─────────────────────────────
-  box(P(mT(-S*3.8,S*.18,S*1.6),mRZ(.03)),S*.8,S*.08,S*3.2,0,0,80);
-  box(P(mT(-S*3.8,S*.18,-S*1.6),mRZ(-.03)),S*.8,S*.08,S*3.2,0,0,80);
+  box(P(mT(-S*3.8,S*.18,S*1.6),mRZ(.03)),S*.8,S*.08,S*3.2,210,8,86);
+  box(P(mT(-S*3.8,S*.18,-S*1.6),mRZ(-.03)),S*.8,S*.08,S*3.2,210,8,86);
   // Dérive verticale (haute)
-  box(P(mT(-S*3.4,S*1.1,0),mRX(.02)),S*.9,S*2.0,S*.1,0,0,78);
-  // Bande bleue sur dérive
-  box(P(mT(-S*3.4,S*1.6,0)),S*.5,S*.8,S*.02,215,80,38);
+  box(P(mT(-S*3.4,S*1.1,0),mRX(.02)),S*.9,S*2.0,S*.1,210,8,88);
+  // Bande bleue sur dérive (deux côtés)
+  box(P(mT(-S*3.4,S*1.6,S*.06)),S*.5,S*.8,S*.04,214,85,42);
+  box(P(mT(-S*3.4,S*1.6,-S*.06)),S*.5,S*.8,S*.04,214,85,42);
 
   // ── Réacteurs sous les ailes ─────────────────────────
   [-S*2.6,S*2.6].forEach(z=>{
@@ -789,22 +790,34 @@ function drawScene(){
   let horizY=hPt?hPt[1]:CY;
   horizY=Math.max(0,Math.min(H,horizY));
 
-  // Ciel
+  // Ciel — gradient jour naturel
   const sk=cx.createLinearGradient(0,0,0,horizY);
-  sk.addColorStop(0,'#04091a');sk.addColorStop(.4,'#0c1e50');
-  sk.addColorStop(.75,'#1555a8');sk.addColorStop(.9,'#e05a10');sk.addColorStop(1,'#f0b830');
+  sk.addColorStop(0,'#0a1428');sk.addColorStop(.25,'#0d2a6e');
+  sk.addColorStop(.6,'#1e6ab8');sk.addColorStop(.82,'#5ba8d8');
+  sk.addColorStop(.93,'#c8e0ee');sk.addColorStop(1,'#e8f4fa');
   cx.fillStyle=sk;cx.fillRect(0,0,W,horizY);
+  // Halo solaire à l'horizon (bas du ciel)
+  const sunX=W*.62;
+  const sunG=cx.createRadialGradient(sunX,horizY,0,sunX,horizY,W*.35);
+  sunG.addColorStop(0,'rgba(255,220,120,0.28)');sunG.addColorStop(.5,'rgba(255,160,60,0.10)');sunG.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=sunG;cx.fillRect(0,0,W,horizY);
 
-  // Sol
+  // Sol — couleur herbe plus douce + brume à l'horizon
   const gd=cx.createLinearGradient(0,horizY,0,H);
-  gd.addColorStop(0,'#5c9432');gd.addColorStop(.6,'#4a7820');gd.addColorStop(1,'#2e4e10');
+  gd.addColorStop(0,'#c8dfa0');  // herbe pâle à l'horizon (brume)
+  gd.addColorStop(.08,'#7aaa3c');
+  gd.addColorStop(.5,'#5a8e28');
+  gd.addColorStop(1,'#3a6018');
   cx.fillStyle=gd;cx.fillRect(0,horizY,W,H-horizY);
+  // Bande de brume à l'horizon (sol)
+  const hazeG=cx.createLinearGradient(0,horizY,0,horizY+H*.12);
+  hazeG.addColorStop(0,'rgba(200,220,230,0.45)');hazeG.addColorStop(1,'rgba(200,220,230,0)');
+  cx.fillStyle=hazeG;cx.fillRect(0,horizY,W,H*.12);
 
-  // Étoiles
-  cx.fillStyle='#fff';
-  for(let s=0;s<50;s++){
-    const sx=sr(s*7)*W|0,sy=sr(s*7+1)*horizY*.75|0;
-    cx.globalAlpha=.3+sr(s*7+2)*.6;cx.fillRect(sx,sy,1,1);
+  // Étoiles (subtiles — ciel de jour les cache)
+  for(let s=0;s<30;s++){
+    const sx=sr(s*7)*W|0,sy=sr(s*7+1)*horizY*.5|0;
+    cx.globalAlpha=(.15+sr(s*7+2)*.2);cx.fillStyle='#fff';cx.fillRect(sx,sy,1,1);
   }
   cx.globalAlpha=1;
 
@@ -856,10 +869,11 @@ function drawScene(){
     }
   }
 
-  // Collines
+  // Collines (vert naturel, légèrement variées)
   HILLS.forEach(h=>{
     if(Math.hypot(h.x-px,h.z-pz)>700)return;
-    box(mT(h.x,h.h*.5,h.z),h.r*2,h.h,h.r*2,100,28,28,.7);
+    const hue=88+sr(h.r)*24|0, sat=32+sr(h.h)*18|0;
+    box(mT(h.x,h.h*.5,h.z),h.r*2,h.h,h.r*2,hue,sat,30,.85);
   });
 
   // Villes + aéroports
@@ -872,12 +886,37 @@ function drawScene(){
   // Arbres
   TREES.forEach(t=>{if(Math.hypot(t.x-px,t.z-pz)<420)drawTree(t);});
 
-  // Nuages
+  // Nuages — sphères blanches avec ombre dessous
   CLOUDS.forEach(c=>{
+    if(Math.hypot(c.x-px,c.z-pz)>900)return;
+    // Ombre portée au sol
+    const shPt=proj(c.x,0.05,c.z);
+    if(shPt){
+      cx.save();cx.globalAlpha=0.12;
+      cx.beginPath();cx.ellipse(shPt[0],shPt[1],40*FL/(shPt[2]+FL),8*FL/(shPt[2]+FL),0,0,Math.PI*2);
+      cx.fillStyle='#2a3a10';cx.fill();cx.restore();
+    }
+    // Dessous sombre d'abord
     c.puffs.forEach(p=>{
-      cyl(mMul(mT(c.x+p.dx,c.y+p.dy,c.z+p.dz),mS(p.r*1.6,p.r*.45,p.r)),1,1,9,220,8,88,.8);
+      cyl(mMul(mT(c.x+p.dx,c.y+p.dy-p.r*.3,c.z+p.dz),mS(p.r*1.5,p.r*.35,p.r)),1,1,9,215,12,65,.6);
+    });
+    // Dessus blanc lumineux
+    c.puffs.forEach(p=>{
+      cyl(mMul(mT(c.x+p.dx,c.y+p.dy,c.z+p.dz),mS(p.r*1.5,p.r*.5,p.r)),1,1,9,210,5,96,.88);
     });
   });
+
+  // Ombre de l'avion au sol
+  if(py<120){
+    const shadowPt=proj(px,0.05,pz);
+    if(shadowPt){
+      const alpha=Math.max(0,0.35*(1-py/120));
+      const scale=1+py*.015;
+      cx.save();cx.globalAlpha=alpha;
+      cx.beginPath();cx.ellipse(shadowPt[0],shadowPt[1],28*FL/(shadowPt[2]*scale),7*FL/(shadowPt[2]*scale),roll*.3,0,Math.PI*2);
+      cx.fillStyle='#1a2808';cx.fill();cx.restore();
+    }
+  }
 
   // Avion
   drawPlane();
