@@ -358,8 +358,8 @@ function reset(){
   speed=28;vspd=0;prevY=py;dist=0;alive=true;propA=0;
   // Caméra directement derrière l'avion dès le départ (pas de lerp initial)
   const bx=Math.sin(yaw),bz=Math.cos(yaw);
-  CAM=v3(px-bx*22,py+6,pz-bz*22);
-  TAR=v3(px+bx*10,py+1,pz+bz*10);
+  CAM=v3(px-bx*38,py+10,pz-bz*38);
+  TAR=v3(px+bx*10,py-1,pz+bz*10);
   camTX=CAM.x;camTY=CAM.y;camTZ=CAM.z;
   lkTX=TAR.x;lkTY=TAR.y;lkTZ=TAR.z;
   document.getElementById('res').style.display='none';
@@ -531,10 +531,10 @@ function update(dt){
   }
   py=Math.min(py,350);
 
-  // Caméra souple — 20u derrière, 8u devant
+  // Caméra souple — 38u derrière, 10u devant
   const bx=Math.sin(yaw),bz=Math.cos(yaw);
-  camTX=px-bx*20; camTY=py+6; camTZ=pz-bz*20;
-  lkTX=px+bx*8;  lkTY=py+1; lkTZ=pz+bz*8;
+  camTX=px-bx*38; camTY=py+10; camTZ=pz-bz*38;
+  lkTX=px+bx*10;  lkTY=py-1; lkTZ=pz+bz*10;
   const L=Math.min(1,dt*5);
   CAM.x+=(camTX-CAM.x)*L; CAM.y+=(camTY-CAM.y)*L; CAM.z+=(camTZ-CAM.z)*L;
   TAR.x+=(lkTX-TAR.x)*L;  TAR.y+=(lkTY-TAR.y)*L;  TAR.z+=(lkTZ-TAR.z)*L;
@@ -677,72 +677,103 @@ function drawTree(t){
 }
 
 function drawPlane(){
-  const S=3; // scale avion
+  const S=4.5; // scale avion (plus grand)
   const M0=mMul(mT(px,py,pz),mRY(-yaw),mRX(-pitch*.95),mRZ(-roll));
-  const P=(...args)=>mMul(M0,...args); // compose avec base avion
+  const P=(...args)=>mMul(M0,...args);
 
-  // Fuselage
-  cyl(P(mRZ(Math.PI/2),mT(0,0,0)),S*.45,S*8,12,215,12,76);
-  // Nez (cône pointé vers +X local)
+  // ── Fuselage principal (cylindre blanc allongé) ──────
+  cyl(P(mRZ(Math.PI/2)),S*.38,S*10,14,0,0,88);
+
+  // ── Section nez effilé ───────────────────────────────
   {
-    const segs=10,r=S*.45,h=S*1.5;
-    const tip=mPt(P(mT(S*4,0,0)),[0,0,0]);
+    const segs=12,r=S*.38;
+    const tip=mPt(P(mT(S*5.2,0,0)),[0,0,0]);
+    const base=mPt(P(mT(S*3.5,0,0)),[0,0,0]);
     const faces2=[];
     for(let i=0;i<segs;i++){
       const a0=i/segs*Math.PI*2,a1=(i+1)/segs*Math.PI*2;
-      const b0=mPt(P(mT(S*2.5,0,0),mRZ(Math.PI/2)),[Math.cos(a0)*r,0,Math.sin(a0)*r]);
-      const b1=mPt(P(mT(S*2.5,0,0),mRZ(Math.PI/2)),[Math.cos(a1)*r,0,Math.sin(a1)*r]);
+      const b0=mPt(P(mT(S*3.5,0,0),mRZ(Math.PI/2)),[Math.cos(a0)*r,0,Math.sin(a0)*r]);
+      const b1=mPt(P(mT(S*3.5,0,0),mRZ(Math.PI/2)),[Math.cos(a1)*r,0,Math.sin(a1)*r]);
       const pts=[proj(...tip),proj(...b0),proj(...b1)];
       if(pts.some(q=>!q))continue;
       faces2.push({pts,depth:(pts[0][2]+pts[1][2]+pts[2][2])/3});
     }
-    faces2.sort((a,b)=>b.depth-a.depth).forEach(f=>poly(f.pts,'hsl(215,10%,68%)',null));
+    faces2.sort((a,b)=>b.depth-a.depth).forEach(f=>poly(f.pts,'#e8ecf0',null));
   }
-  // Queue effilée
-  cyl(P(mRZ(Math.PI/2),mT(S*2.5,0,0),mS(1,.65,.65)),S*.45,S*3,10,215,10,62);
 
-  // Cockpit
-  box(P(mT(S*.8,S*.45,0)),S*.95,S*.5,S*.75,210,32,28,.92);
+  // ── Queue effilée ────────────────────────────────────
+  cyl(P(mRZ(Math.PI/2),mT(S*3.5,0,0),mS(1,.55,.55)),S*.38,S*3.5,12,0,0,80);
 
-  // Ailes
-  box(P(mT(0,S*.12,S*2.1),mRZ(.05)),S*1.2,S*.16,S*4.2,218,55,56);
-  box(P(mT(0,S*.12,-S*2.1),mRZ(-.05)),S*1.2,S*.16,S*4.2,218,55,56);
-  // Winglets
-  box(P(mT(0,S*.65,S*4.1),mRZ(.28)),S*.6,S*.14,S*.22,218,50,48);
-  box(P(mT(0,S*.65,-S*4.1),mRZ(-.28)),S*.6,S*.14,S*.22,218,50,48);
+  // ── Bande de couleur sur fuselage (bleu compagnie) ───
+  // Dessinée comme un box plat sur le côté du fuselage
+  box(P(mT(S*.3,S*.3,0)),S*8,S*.18,S*.02,215,80,38);
 
-  // Empennage H
-  box(P(mT(-S*2.6,S*.12,S*1.3)),S*.7,S*.12,S*2.4,215,16,55);
-  box(P(mT(-S*2.6,S*.12,-S*1.3)),S*.7,S*.12,S*2.4,215,16,55);
-  // Dérive
-  box(P(mT(-S*2.4,S*.85,0)),S*.75,S*1.5,S*.14,215,16,52);
+  // ── Cockpit vitré ────────────────────────────────────
+  box(P(mT(S*2.8,S*.28,0)),S*1.1,S*.38,S*.65,210,60,25,.95);
+  // Vitre (bleu foncé)
+  box(P(mT(S*3.1,S*.32,0)),S*.5,S*.28,S*.5,215,55,18,.88);
 
-  // Moteurs
-  [-S*1.8,S*1.8].forEach(z=>{
-    cyl(P(mRZ(Math.PI/2),mT(0,S*.32,z)),S*.32,S*1.8,10,28,10,36);
-    box(P(mT(0,S*.12,z)),S,S*.28,S*.22,210,8,40);
-  });
+  // ── Ailes (longues et minces, dièdre positif) ────────
+  // Racine → milieu
+  box(P(mT(-S*.2,S*.05,S*2.0),mRZ(.04)),S*2.2,S*.11,S*4.0,0,0,82);
+  box(P(mT(-S*.2,S*.05,-S*2.0),mRZ(-.04)),S*2.2,S*.11,S*4.0,0,0,82);
+  // Milieu → bout (plus fine)
+  box(P(mT(-S*.4,S*.3,S*5.2),mRZ(.12)),S*1.8,S*.08,S*2.8,0,0,78);
+  box(P(mT(-S*.4,S*.3,-S*5.2),mRZ(-.12)),S*1.8,S*.08,S*2.8,0,0,78);
+  // Winglets redressés
+  box(P(mT(-S*.5,S*1.0,S*6.5),mRZ(.55)),S*.6,S*.9,S*.1,0,0,74);
+  box(P(mT(-S*.5,S*1.0,-S*6.5),mRZ(-.55)),S*.6,S*.9,S*.1,0,0,74);
 
-  // Hélices
-  [-S*1.8,S*1.8].forEach((z,mi)=>{
-    for(let b=0;b<4;b++){
-      const a=propA+(mi*.4)+b*Math.PI/2;
-      box(P(mT(S*1.2,S*.32,z),mRX(a)),S*.1,S*1.5,S*.28,0,0,22);
+  // ── Empennage horizontal ─────────────────────────────
+  box(P(mT(-S*3.8,S*.18,S*1.6),mRZ(.03)),S*.8,S*.08,S*3.2,0,0,80);
+  box(P(mT(-S*3.8,S*.18,-S*1.6),mRZ(-.03)),S*.8,S*.08,S*3.2,0,0,80);
+  // Dérive verticale (haute)
+  box(P(mT(-S*3.4,S*1.1,0),mRX(.02)),S*.9,S*2.0,S*.1,0,0,78);
+  // Bande bleue sur dérive
+  box(P(mT(-S*3.4,S*1.6,0)),S*.5,S*.8,S*.02,215,80,38);
+
+  // ── Réacteurs sous les ailes ─────────────────────────
+  [-S*2.6,S*2.6].forEach(z=>{
+    // Nacelle (corps du réacteur)
+    cyl(P(mRZ(Math.PI/2),mT(0,-S*.28,z)),S*.28,S*2.4,12,0,0,30);
+    // Entrée d'air (anneau sombre)
+    cyl(P(mRZ(Math.PI/2),mT(S*1.3,-S*.28,z)),S*.3,S*.15,12,0,0,10);
+    // Tuyère arrière
+    cyl(P(mRZ(Math.PI/2),mT(-S*.95,-S*.28,z),mS(1,.82,.82)),S*.26,S*.4,10,0,0,20);
+    // Pylône (attache aile→réacteur)
+    box(P(mT(-S*.1,-S*.12,z)),S*.5,S*.32,S*.1,0,0,55);
+    // Souffle (lueur chaude derrière tuyère)
+    const tuyPt=proj(...mPt(P(mT(-S*1.2,-S*.28,z)),[0,0,0]));
+    if(tuyPt){
+      cx.save();
+      cx.beginPath();cx.arc(tuyPt[0],tuyPt[1],S*1.2/(tuyPt[2]/30+1),0,Math.PI*2);
+      const g=cx.createRadialGradient(tuyPt[0],tuyPt[1],0,tuyPt[0],tuyPt[1],S*2/(tuyPt[2]/30+1));
+      g.addColorStop(0,'rgba(200,220,255,0.6)');g.addColorStop(.5,'rgba(160,200,255,0.2)');g.addColorStop(1,'rgba(0,0,0,0)');
+      cx.fillStyle=g;cx.fill();cx.restore();
     }
   });
 
-  // Train
-  [-S*1.2,S*1.2].forEach(z=>{
-    box(P(mT(S*.3,-S*.62,z)),S*.1,S*.7,S*.1,0,0,28);
-    cyl(P(mT(S*.3,-S*.98,z),mRX(Math.PI/2)),S*.22,S*.22,8,0,0,18);
+  // ── Train d'atterrissage principal ───────────────────
+  [-S*1.4,S*1.4].forEach(z=>{
+    box(P(mT(S*.1,-S*.52,z)),S*.08,S*.65,S*.08,0,0,22);
+    cyl(P(mT(S*.1,-S*.92,z),mRX(Math.PI/2)),S*.2,S*.2,8,0,0,15);
   });
-  box(P(mT(S*2.3,-S*.45,0)),S*.1,S*.5,S*.1,0,0,28);
-  cyl(P(mT(S*2.3,-S*.75,0),mRX(Math.PI/2)),S*.16,S*.16,8,0,0,18);
+  // Train avant
+  box(P(mT(S*3.2,-S*.38,0)),S*.07,S*.48,S*.07,0,0,22);
+  cyl(P(mT(S*3.2,-S*.7,0),mRX(Math.PI/2)),S*.14,S*.14,8,0,0,15);
 
-  // Feux nav
-  box(P(mT(0,S*.12,S*4.2)),S*.2,S*.2,S*.2,120,100,55);
-  box(P(mT(0,S*.12,-S*4.2)),S*.2,S*.2,S*.2,0,100,55);
-  box(P(mT(-S*2.4,S*1.6,0)),S*.16,S*.16,S*.16,0,0,90);
+  // ── Feux de navigation ───────────────────────────────
+  // Vert droite, rouge gauche, blanc queue
+  {
+    const fR=proj(...mPt(P(mT(-S*.4,S*.3,S*6.5)),[0,0,0]));
+    const fL=proj(...mPt(P(mT(-S*.4,S*.3,-S*6.5)),[0,0,0]));
+    const fT=proj(...mPt(P(mT(-S*4.3,S*2.1,0)),[0,0,0]));
+    [[fR,'#00ff88'],[fL,'#ff3030'],[fT,'#ffffff']].forEach(([pt,col])=>{
+      if(!pt)return;
+      cx.save();cx.beginPath();cx.arc(pt[0],pt[1],2.5,0,Math.PI*2);
+      cx.fillStyle=col;cx.shadowColor=col;cx.shadowBlur=6;cx.fill();cx.restore();
+    });
+  }
 }
 
 function drawScene(){
